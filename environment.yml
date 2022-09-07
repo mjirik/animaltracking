@@ -1,0 +1,26 @@
+name: pythontemplate
+channels:
+#    - mjirik
+#    - SimpleITK
+#    - conda-forge
+#    - anaconda
+#    - pytorch
+    - defaults
+dependencies:
+    - python
+#    - scikit-image
+#    - scipy
+#    - io3d
+#    - sed3
+#    - seaborn
+#    - pytz
+#    - SimpleITK
+#    - python-dateutil
+#    - pytest
+#    - pytorch=1.8.0
+#    - torchvision
+#    - torchaudio
+#    - cudatoolkit=11.0
+#    - scikit-learn
+#    - timm
+
