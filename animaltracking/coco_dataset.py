@@ -362,8 +362,8 @@ class CocoDataset:
 
     def train_test_split(
         self,
-        split1_path: Optional[Path, str],
-        split2_path: Optional[Path, str],
+        split1_path: Union[Path, str, None]=None,
+        split2_path: Union[Path, str, None]=None,
         test_size=None,
         train_size=None,
         random_state=None,
