@@ -398,10 +398,10 @@ class CocoDataset:
         split2_coco["images"] = [self.images[im_id] for im_id in im_ids2]
 
         split1_coco["annotations"] = [].extend(
-            [self.segmentations[im_id] for im_id in im_ids1]
+            [self.segmentations[im_id] for im_id in im_ids1 if im_id in self.segmentations]
         )
         split2_coco["annotations"] = [].extend(
-            [self.segmentations[im_id] for im_id in im_ids2]
+            [self.segmentations[im_id] for im_id in im_ids2 if im_id in self.segmentations]
         )
 
         if split1_path and split2_path:
