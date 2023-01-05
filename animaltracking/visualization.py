@@ -12,7 +12,7 @@ def create_heatmap_report(
     points: np.ndarray,
     image: Optional[np.ndarray] = None,
     filename: Optional[Path] = None,
-    show_trajectory:bool=True,
+    show_trajectory: bool = True,
 ):
     """
     :param points: xy points with shape = [i,2]
@@ -56,7 +56,7 @@ def create_heatmap_report(
         linewidth=0,
     )
     if show_trajectory:
-        plt.plot(points[:,0], points[:,1], "b")
+        plt.plot(points[:, 0], points[:, 1], "b")
     if filename is not None:
         # plt.savefig(Path(filename))
         plt.savefig(Path(filename), bbox_inches="tight", pad_inches=0)
@@ -65,22 +65,25 @@ def create_heatmap_report(
     return fig
 
 
-
-def insert_ruler_in_image(img, pixelsize, ruler_size=50, resize_factor=1., unit='mm'):
+def insert_ruler_in_image(img, pixelsize, ruler_size=50, resize_factor=1.0, unit="mm"):
     image_size = np.asarray(img.shape[:2])
     # start_point = np.asarray(image_size) * 0.90
     # start_point = np.array([10,10])
-    thickness = int(0.01 * img.shape[0]/resize_factor)
+    thickness = int(0.01 * img.shape[0] / resize_factor)
     # start_point = np.array([image_size[1]*0.98, image_size[0]*0.97]) # right down corner
-    start_point = np.array([image_size[1]*0.02, image_size[0]*0.97])
+    start_point = np.array([image_size[1] * 0.02, image_size[0] * 0.97])
     ruler_size_px = ruler_size / pixelsize
-    end_point = start_point + np.array([ruler_size_px,0])
+    end_point = start_point + np.array([ruler_size_px, 0])
 
-    cv2.line(img, start_point.astype(int), end_point.astype(int), (255,255,255), thickness)
+    cv2.line(
+        img, start_point.astype(int), end_point.astype(int), (255, 255, 255), thickness
+    )
 
-    text_point = start_point.astype(np.int) - np.array([0,int(0.020 * img.shape[0])/resize_factor]).astype(int)
+    text_point = start_point.astype(np.int) - np.array(
+        [0, int(0.020 * img.shape[0]) / resize_factor]
+    ).astype(int)
     # img[line]
-    text_thickness = int(0.004 * img.shape[0]/resize_factor)
+    text_thickness = int(0.004 * img.shape[0] / resize_factor)
     # logger.debug(f"ruler_size_px={ruler_size_px}")
     # logger.debug(f"text_point={text_point}")
     # logger.debug(f"text_thickness={text_thickness}")
@@ -90,8 +93,8 @@ def insert_ruler_in_image(img, pixelsize, ruler_size=50, resize_factor=1., unit=
         text_point,
         # (int(position[0]+(circle_radius*2.5)), int(position[1]+circle_radius*0)),
         cv2.FONT_HERSHEY_SIMPLEX,
-        fontScale=.0007 * img.shape[0]/resize_factor,
-        color=(255,255,255),
-        thickness=text_thickness
+        fontScale=0.0007 * img.shape[0] / resize_factor,
+        color=(255, 255, 255),
+        thickness=text_thickness,
     )
     return img
