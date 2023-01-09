@@ -1,5 +1,6 @@
 # Source: https://www.immersivelimit.com/tutorials/create-coco-annotations-from-scratch/#create-custom-coco-dataset
 import base64
+
 # import IPython
 import json
 import numpy as np
