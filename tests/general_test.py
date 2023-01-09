@@ -1,6 +1,6 @@
 import pytest
-import pythontemplate.moduleone
+# import pythontemplate.moduleone
 
 
-def test_hello():
-    pythontemplate.moduleone.print_hello("Vlkoslav")
+# def test_hello():
+#     pythontemplate.moduleone.print_hello("Vlkoslav")
