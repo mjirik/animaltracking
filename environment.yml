@@ -8,11 +8,13 @@ channels:
     - defaults
 dependencies:
     - python
-#    - scikit-image
-#    - scipy
+    - numpy
+    - scikit-image
+    - scipy
+    - scikit-learn
+    - seaborn
 #    - io3d
 #    - sed3
-#    - seaborn
 #    - pytz
 #    - SimpleITK
 #    - python-dateutil
@@ -21,6 +23,5 @@ dependencies:
 #    - torchvision
 #    - torchaudio
 #    - cudatoolkit=11.0
-#    - scikit-learn
 #    - timm
 
