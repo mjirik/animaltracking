@@ -9,10 +9,11 @@ print(CI)
 
 
 def test_coco_split():
-    filetools.wget("https://github.com/Tony607/detectron2_instance_segmentation_demo/releases/download/V0.1/data.zip",
-         "data.zip")
+    filetools.wget(
+        "https://github.com/Tony607/detectron2_instance_segmentation_demo/releases/download/V0.1/data.zip",
+        "data.zip",
+    )
     filetools.unzip("data.zip", ".")
-
 
     # fnin = Path("instances_default.json")
     fnin = Path("data/trainval.json")
