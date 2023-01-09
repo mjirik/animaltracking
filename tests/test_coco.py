@@ -7,6 +7,7 @@ CI = os.getenv("CARNIVOREID_DATASET_BASEDIR", r"H:\biology\orig\CarnivoreID")
 print(type(CI))
 print(CI)
 
+
 def test_coco_split():
     fnin = Path("instances_default.json")
     fntest = Path("test.json")
