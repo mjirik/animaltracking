@@ -7,7 +7,7 @@
 mkdir -p ~/mnt/biomedical
 sshfs mjirik@storage-plzen4.kky.zcu.cz:/data-ntis/projects/korpusy_cv/biomedical ~/mnt/biomedical
 
-
+# create .vim file with keys: $CAMERA_USER $CAMERA_PASS $CAMERA_URL
 export $(grep -v '^#' .env | xargs -d '\n')
 
 if [ "$#" -ne 1 ]; then
