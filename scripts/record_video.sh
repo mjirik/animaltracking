@@ -10,6 +10,19 @@ sshfs mjirik@storage-plzen4.kky.zcu.cz:/data-ntis/projects/korpusy_cv/biomedical
 
 export $(grep -v '^#' .env | xargs -d '\n')
 
+if [ "$#" -ne 1 ]; then
+    export CAMERA_URL=$CAMERA1_URL
+    echo "No camera number given. Using Camera 1"
+else
+    if [ "$1" -eq 2 ]; then
+        export CAMERA_URL=$CAMERA2_URL
+        echo "Using Camera 2"
+    else
+        export CAMERA_URL=$CAMERA1_URL
+        echo "Using Camera 1"
+    fi
+fi
+
 DT=$(date +%Y%m%d_%H%M%S)
 mkdir -p ~/mnt/biomedical/orig/pigtracking/$DT
 cd ~/mnt/biomedical/orig/pigtracking/$DT
