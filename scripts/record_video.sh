@@ -10,15 +10,19 @@ sshfs mjirik@storage-plzen4.kky.zcu.cz:/data-ntis/projects/korpusy_cv/biomedical
 # create .vim file with keys: $CAMERA_USER $CAMERA_PASS $CAMERA_URL
 export $(grep -v '^#' .env | xargs -d '\n')
 
+
 if [ "$#" -ne 1 ]; then
     export CAMERA_URL=$CAMERA1_URL
+    export CAMERA_NUMBER=1
     echo "No camera number given. Using Camera 1"
 else
     if [ "$1" -eq 2 ]; then
         export CAMERA_URL=$CAMERA2_URL
+        export CAMERA_NUMBER=2
         echo "Using Camera 2"
     else
         export CAMERA_URL=$CAMERA1_URL
+        export CAMERA_NUMBER=1
         echo "Using Camera 1"
     fi
 fi
@@ -38,5 +42,5 @@ cd ~/mnt/biomedical/orig/pigtracking/$DT
 #-P 900        # Start a new output file every -P seconds
 #-t            # Request camera end stream over TCP, not UDP
 #-u admin 123456  # Username and password expected by camer
-#openRTSP -D 1 -c -B 10000000 -b 10000000 -4 -Q -F cam1 -d 28800 -P 600 -t -u CAM_USER CAM_PASSWORD rtsp://IPADRESS:PORT
-openRTSP -D 1 -c -B 10000000 -b 10000000 -4 -Q -F cam1 -d 28800 -P 600 -t -u $CAMERA_USER $CAMERA_PASS $CAMERA_URL
+#openRTSP -D 1 -c -B 10000000 -b 10000000 -4 -Q -F cam$CAMERA_NUMBER_$DT -d 28800 -P 600 -t -u CAM_USER CAM_PASSWORD rtsp://IPADRESS:PORT
+openRTSP -D 1 -c -B 10000000 -b 10000000 -4 -Q -F cam$CAMERA_NUMBER_$DT -d 28800 -P 600 -t -u $CAMERA_USER $CAMERA_PASS $CAMERA_URL
