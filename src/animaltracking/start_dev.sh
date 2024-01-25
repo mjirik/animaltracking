@@ -7,6 +7,8 @@
 python manage.py migrate --noinput --verbosity 2
 python manage.py collectstatic --noinput --verbosity 2
 
+python manage.py rqworker default
+#python manage.py rqworker high default low
 # start "local" celery worker
 # C_FORCE_ROOT=false celery -A caidapp.celery_app worker --pool threads --loglevel info &
 

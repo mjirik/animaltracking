@@ -5,3 +5,6 @@ uvicorn
 django-allauth
 django-widget-tweaks
 PyYAML==6.0
+redis
+rq
+django-rq
