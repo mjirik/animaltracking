@@ -1,27 +1,28 @@
-name: pythontemplate
+name: animaltracking
 channels:
-#    - mjirik
-#    - SimpleITK
-#    - conda-forge
-#    - anaconda
-#    - pytorch
-    - defaults
+  - conda-forge
+  #    - mjirik
+  #    - SimpleITK
+  #    - anaconda
+  #    - pytorch
+  - defaults
 dependencies:
-    - python
-    - numpy
-    - scikit-image
-    - scipy
-    - scikit-learn
-    - seaborn
-#    - io3d
-#    - sed3
-#    - pytz
-#    - SimpleITK
-#    - python-dateutil
-#    - pytest
-#    - pytorch=1.8.0
-#    - torchvision
-#    - torchaudio
-#    - cudatoolkit=11.0
-#    - timm
+  - python
+  - numpy
+  - scikit-image
+  - scipy
+  - scikit-learn
+  - seaborn
+  - django=4.2
+    #    - io3d
+    #    - sed3
+    #    - pytz
+    #    - SimpleITK
+    #    - python-dateutil
+    #    - pytest
+    #    - pytorch=1.8.0
+    #    - torchvision
+    #    - torchaudio
+    #    - cudatoolkit=11.0
+    #    - timm
 

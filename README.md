@@ -5,10 +5,9 @@
 
 Install build packages and setup automatic upload after build.
 
-```commandline
-conda install -c conda-forge bump2version conda-build anaconda-client
-anaconda login
-conda config --set anaconda_upload yes
+```bash
+conda env create -f environment.yml
+
 ```
 
 ## Initial package setup
