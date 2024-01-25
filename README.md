@@ -1,6 +1,29 @@
 # pythontemplate
 
 
+## Run application
+
+```shell
+echo "WANDB_API_KEY=..." >> .env
+```
+
+```bash
+docker compose -f docker-compose.yml up -d --build
+```
+
+If you run the app for first time
+
+```bash
+docker compose -f docker-compose.yml exec webapp
+```
+
+```bash
+python manage.py migrate
+python manage.py createsuperuser
+```
+
+
+
 ## Install requirements
 
 Install build packages and setup automatic upload after build.

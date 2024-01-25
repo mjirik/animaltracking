@@ -1,0 +1,107 @@
+version: "3.8"
+
+services:
+  db:
+    image: postgres:14.4-alpine
+    container_name: carnivoreid-app-db
+    restart: always
+    environment:
+      TZ: Europe/Prague
+      POSTGRES_DB: main_database
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    expose:
+      - 5432
+    networks:
+      - webapp
+  redis:
+    image: redis:7.0.11-alpine
+    container_name: carnivoreid-app-redis
+    restart: always
+    command: >
+      --loglevel warning
+      --requirepass password
+    volumes:
+      - redis-data:/data:Z
+    expose:
+      - 6379
+    networks:
+      - webapp
+
+  webapp:
+    image: ${API_IMAGE:-api}${TAG:-:latest}
+    build:
+      context: .
+      dockerfile: ./src/animaltracking/Dockerfile
+    container_name: animaltracking-webapp
+    restart: always
+    environment:
+      CAID_HOST: ${WEBAPP_HOST:-localhost}
+    env_file:
+      - "src/variables.env"
+      - ".env"
+    volumes:
+      - api-data:/data  # data used only by API
+      - shared-data:/shared_data  # shared data with API, Workers, and Nginx
+      - private-data:/private_data  # private keys that should not be automatically backed up
+    expose:
+      - 8080  # this should be accessible through inner nginx
+#    depends_on:
+#      - inference_worker
+#      - identification_worker
+    networks:
+      - webapp
+
+#  inference_worker:
+#    platform: linux/amd64
+#    image: ${INFERENCE_WORKER_IMAGE:-inference_worker}${TAG:-:latest}
+#    build:
+#      context: .
+#      dockerfile: src/inference_worker/Dockerfile
+#    container_name: carnivoreid-app-inference-worker
+#    restart: always
+#    env_file:
+#      - "src/variables.env"
+#      - ".env"
+#    volumes:
+#      - inference-worker-data:/data  # data used only by Worker
+#      - shared-data:/shared_data  # shared data with API, Workers, and Nginx
+#    depends_on:
+#      - broker
+#      - redis
+#    networks:
+#      - backend
+#    labels:
+#      com.piva-ai.group: "applications"
+
+
+  nginx:
+    image: ${NGINX_IMAGE:-custom_nginx}${TAG:-:latest}
+    build: src/nginx
+    container_name: carnivoreid-app-nginx
+    volumes:
+      - shared-data:/shared_data  # shared data with API, Workers, and Nginx
+    depends_on:
+      - webapp
+    ports:
+      - "13580:8080"  # this should be input point from the outer nginx. Inner nginx will redirect static files
+    networks:
+      - webapp
+    labels:
+      com.piva-ai.group: "applications"
+
+volumes:
+  redis-data:
+  db-data:
+  api-data:
+  inference-worker-data:
+  identification-worker-data:
+  identification-worker-db-data:
+  shared-data:
+  private-data:
+
+networks:
+  webapp:

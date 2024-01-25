@@ -1,0 +1,17 @@
+version: "3.8"
+
+services:
+  webapp:
+    image: animaltracking-webapp:dev
+    build:
+      context: .
+      dockerfile: ./src/animaltracking/Dockerfile.dev
+#      dockerfile: ./src/api/Dockerfile_dev
+    ports:
+      - 18080:8080
+
+    restart: "no"
+    environment:
+      DEBUG: "True"
+    volumes:
+      - ./src/animaltracking:/animaltracking
