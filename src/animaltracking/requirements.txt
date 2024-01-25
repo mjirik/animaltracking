@@ -1,0 +1,7 @@
+django==4.2
+django_q
+scikit-image
+uvicorn
+django-allauth
+django-widget-tweaks
+PyYAML==6.0
