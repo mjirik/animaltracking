@@ -4,8 +4,10 @@
 # sudo apt-get update
 # sudo apt-get install sshfs livemedia-utils
 
-mkdir -p ~/mnt/biomedical
-sshfs mjirik@storage-plzen4.kky.zcu.cz:/data-ntis/projects/korpusy_cv/biomedical ~/mnt/biomedical
+DATADIR="$HOME/data/biomedical/"
+
+# mkdir -p ~/mnt/biomedical
+# sshfs $USER@storage-plzen4.kky.zcu.cz:/data-ntis/projects/korpusy_cv/biomedical ~/mnt/biomedical
 
 # create .vim file with keys: $CAMERA_USER $CAMERA_PASS $CAMERA_URL
 export $(grep -v '^#' .env | xargs -d '\n')
@@ -28,8 +30,14 @@ else
 fi
 
 DT=$(date +%Y%m%d_%H%M%S)
-mkdir -p ~/mnt/biomedical/orig/pigtracking/$DT
-cd ~/mnt/biomedical/orig/pigtracking/$DT
+mkdir -p $DATADIR/orig/pigtracking/$DT
+cd $DATADIR/orig/pigtracking/$DT
+echo "output dir:"
+echo `pwd`
+
+## mkdir -p ~/mnt/biomedical/orig/pigtracking/$DT
+## cd ~/mnt/biomedical/orig/pigtracking/$DT
+
 #-D 1 # Quit if no packets for 1 second or more
 #-c   # Continuously record, after completion of -d timeframe
 #-B 10000000 # Input buffer of 10 MB
@@ -43,4 +51,4 @@ cd ~/mnt/biomedical/orig/pigtracking/$DT
 #-t            # Request camera end stream over TCP, not UDP
 #-u admin 123456  # Username and password expected by camer
 #openRTSP -D 1 -c -B 10000000 -b 10000000 -4 -Q -F cam$CAMERA_NUMBER_$DT -d 28800 -P 600 -t -u CAM_USER CAM_PASSWORD rtsp://IPADRESS:PORT
-openRTSP -D 1 -c -B 10000000 -b 10000000 -4 -Q -F cam$CAMERA_NUMBER_$DT -d 28800 -P 600 -t -u $CAMERA_USER $CAMERA_PASS $CAMERA_URL
+openRTSP -D 1 -c -B 10000000 -b 10000000 -4 -Q -F ${DT}_cam${CAMERA_NUMBER} -d 28800 -P 60 -t -u $CAMERA_USER $CAMERA_PASS $CAMERA_URL
