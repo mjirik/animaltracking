@@ -31,14 +31,14 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
     "django_rq",
-    'antra',
+    "antra",
 ]
 
 MIDDLEWARE = [
@@ -128,13 +128,13 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
 RQ_QUEUES = {
-    'default': {
-        'HOST': 'localhost',
-        'PORT': 6379,
-        'DB': 0,
-        'USERNAME': '',
-        'PASSWORD': 'password',
-        'DEFAULT_TIMEOUT': 360,
+    "default": {
+        "HOST": "localhost",
+        "PORT": 6379,
+        "DB": 0,
+        "USERNAME": "",
+        "PASSWORD": "password",
+        "DEFAULT_TIMEOUT": 360,
         # 'REDIS_CLIENT_KWARGS': {    # Eventual additional Redis connection arguments
         #     'ssl_cert_reqs': None,
         # },
