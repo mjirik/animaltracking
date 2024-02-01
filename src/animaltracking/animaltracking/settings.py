@@ -118,7 +118,8 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
 STATIC_URL = "static/"
-STATIC_ROOT = Path(BASE_DIR) / "staticfiles"
+# STATIC_ROOT = Path(BASE_DIR) / "staticfiles"
+STATIC_ROOT = Path("/shared_data") / "staticfiles"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
