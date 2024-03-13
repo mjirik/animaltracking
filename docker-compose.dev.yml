@@ -8,7 +8,7 @@ services:
       dockerfile: ./src/animaltracking/Dockerfile.dev
 #      dockerfile: ./src/api/Dockerfile_dev
     ports:
-      - 18080:8080
+      - 8080
 
     restart: "no"
     environment:

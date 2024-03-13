@@ -81,13 +81,13 @@ services:
   nginx:
     image: ${NGINX_IMAGE:-custom_nginx}${TAG:-:latest}
     build: src/nginx
-    container_name: carnivoreid-app-nginx
+    container_name: animaltracking-app-nginx
     volumes:
       - shared-data:/shared_data  # shared data with API, Workers, and Nginx
     depends_on:
       - webapp
     ports:
-      - "13580:8080"  # this should be input point from the outer nginx. Inner nginx will redirect static files
+      - "18080:8080"  # this should be input point from the outer nginx. Inner nginx will redirect static files
     networks:
       - webapp
     labels:
