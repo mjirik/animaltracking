@@ -21,3 +21,4 @@ class MyLoginView(LoginView):
         """Return error message if wrong username or password is given."""
         messages.error(self.request, "Invalid username or password")
         return self.render_to_response(self.get_context_data(form=form))
+
