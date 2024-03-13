@@ -2,6 +2,7 @@ from django.db import models
 
 # Create your models here.
 
+
 class Camera(models.Model):
     name = models.CharField(max_length=100)
     ip = models.GenericIPAddressField()
@@ -12,6 +13,7 @@ class Camera(models.Model):
 
     def __str__(self):
         return self.name
+
 
 class MediaFile(models.Model):
     file = models.FileField(upload_to="media/")
