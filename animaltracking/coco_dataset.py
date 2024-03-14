@@ -1,19 +1,20 @@
 # Source: https://www.immersivelimit.com/tutorials/create-coco-annotations-from-scratch/#create-custom-coco-dataset
 import base64
+import copy
 
 # import IPython
 import json
-import numpy as np
 import os
 import random
-import requests
 from io import BytesIO
 from math import trunc
+from pathlib import Path
+from typing import List, Optional, Tuple, Union
+
+import numpy as np
+import requests
 from PIL import Image as PILImage
 from PIL import ImageDraw as PILImageDraw
-from pathlib import Path
-from typing import Union, Optional, Tuple, List
-import copy
 
 
 # Load the dataset json

@@ -1,11 +1,12 @@
-import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
 from pathlib import Path
 from typing import Optional
-from loguru import logger
-import skimage
+
 import cv2
+import matplotlib.pyplot as plt
+import numpy as np
+import seaborn as sns
+import skimage
+from loguru import logger
 
 
 def create_heatmap_report(

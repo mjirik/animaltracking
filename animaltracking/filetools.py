@@ -1,7 +1,8 @@
 from typing import Union, Optional
 from pathlib import Path
+from typing import Optional, Union
+
 import requests
-import zipfile
 import tqdm
 
 
@@ -46,6 +47,7 @@ def unzip(filename: Union[Path, str], output_path: Union[None, Path, str] = None
             # Extract each file to another directory
             # If you want to extract to current working directory, don't specify path
             zip_file.extract(member=file, path=output_path)
+
 
     # zf = zipfile.ZipFile(filename)
     # zf.extractall()

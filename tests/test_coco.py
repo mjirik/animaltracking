@@ -1,5 +1,7 @@
-import pytest
+import os
 from pathlib import Path
+
+import pytest
 from animaltracking import coco_dataset, filetools
 import os
 
