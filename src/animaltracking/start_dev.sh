@@ -13,9 +13,11 @@ python manage.py rqworker default
 # C_FORCE_ROOT=false celery -A caidapp.celery_app worker --pool threads --loglevel info &
 
 # start django
-uvicorn animaltracking.asgi:application \
-    --host 0.0.0.0 \
-    --port 8080 \
-    --log-config logging.yaml \
-    --log-level info\
-    --reload
+python manage.py runserver 0.0.0.0:8080
+
+#uvicorn animaltracking.asgi:application \
+#    --host 0.0.0.0 \
+#    --port 8080 \
+#    --log-config logging.yaml \
+#    --log-level debug\
+#    --reload

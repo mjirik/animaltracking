@@ -90,8 +90,6 @@ services:
       - "18080:8080"  # this should be input point from the outer nginx. Inner nginx will redirect static files
     networks:
       - webapp
-    labels:
-      com.piva-ai.group: "applications"
 
 volumes:
   redis-data:

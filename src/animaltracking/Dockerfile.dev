@@ -18,7 +18,7 @@ RUN pip install --no-cache-dir --upgrade pip build && \
     pip install --no-cache-dir --compile -r requirements.txt && \
     rm -rf /var/lib/apt/lists/* /var/cache/apt/* /tmp/* /var/tmp/*
 
-COPY ./src/animaltracking/start_dev.sh /animaltracking/start_dev.sh
+#COPY ./src/animaltracking/start_dev.sh /animaltracking/start_dev.sh
 
 # expose ports and run application
 WORKDIR $APP_DIR
