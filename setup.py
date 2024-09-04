@@ -1,10 +1,10 @@
 # Fallowing command is used to upload to pipy
 #    python setup.py register sdist upload
 # Always prefer setuptools over distutils
-from os import path
 import pathlib
+from os import path
 
-from setuptools import setup, find_packages
+from setuptools import find_packages, setup
 
 # The directory containing this file
 HERE = pathlib.Path(__file__).parent

@@ -1,7 +1,8 @@
 from typing import Union, Optional
 from pathlib import Path
+from typing import Optional, Union
+
 import requests
-import zipfile
 import tqdm
 
 
