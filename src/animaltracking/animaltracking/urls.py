@@ -21,9 +21,11 @@ from django.conf.urls.static import static
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("antra/", include("antra.urls" ),
-         # namespace="antra"
-         ),
+    path(
+        "antra/",
+        include("antra.urls"),
+        # namespace="antra"
+    ),
     path("django-rq/", include("django_rq.urls")),
 ]
 

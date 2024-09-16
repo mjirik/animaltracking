@@ -32,11 +32,10 @@ ALLOWED_HOSTS = [
     "127.0.0.1",
     ".localhost",  # '.' allows to match both 'www.localhost' and 'localhost'
     ANTRA_HOST,
-
 ]
 CSRF_TRUSTED_ORIGINS = [
-    'http://127.0.0.1:18080',
-    'http://localhost:18080',
+    "http://127.0.0.1:18080",
+    "http://localhost:18080",
 ]
 
 
