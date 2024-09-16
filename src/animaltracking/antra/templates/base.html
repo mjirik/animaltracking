@@ -72,7 +72,7 @@
 
 <!--  </header>-->
 <div class="mb-2 pt-3 px-2 bg-light pb-0 text-center">
-    <h1>Animal Tracking lkajsdfslaj</h1>
+    <h1>Animal Tracking</h1>
     <p class="text pb-0 mb-0">Analysis of the animal track</p>
 
     <nav class="navbar navbar-expand-lg navbar-light bg-light px-0 py-0">
@@ -92,7 +92,13 @@
                 <li class="nav-item">
                     <a class="nav-link" href="{% url 'antra:login' %}">Login</a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'antra:mediafile-list' %}">Mediafiles</a>
+                </li>
 
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'antra:import_videos' %}">Import Videos</a>
+                </li>
             </ul>
         </div>
         <!--      Login is on the right part of navbar -->
@@ -232,6 +238,16 @@
 <!--                    <div id="appbody" class="container">-->
 <div id="appbody">
     <!--                        <div class="container">-->
+    {% if messages %}
+    <div class="alert alert-warning" role="alert">
+        <ul class="messages">
+            {% for message in messages %}
+            <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    {% endif %}
     {% block body %}
     {% endblock %}
     {% block content %}

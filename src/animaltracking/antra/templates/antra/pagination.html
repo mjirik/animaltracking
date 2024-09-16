@@ -1,0 +1,17 @@
+<div class="pagination">
+    <span class="step-links">
+        {% if mediafiles.has_previous %}
+            <a href="?page=1">&laquo; first</a>
+            <a href="?page={{ mediafiles.previous_page_number }}">previous</a>
+        {% endif %}
+
+        <span class="current">
+            Page {{ mediafiles.number }} of {{ mediafiles.paginator.num_pages }}.
+        </span>
+
+        {% if mediafiles.has_next %}
+            <a href="?page={{ mediafiles.next_page_number }}">next</a>
+            <a href="?page={{ mediafiles.paginator.num_pages }}">last &raquo;</a>
+        {% endif %}
+    </span>
+</div>

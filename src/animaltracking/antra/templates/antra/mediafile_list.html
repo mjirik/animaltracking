@@ -1,0 +1,19 @@
+<!-- mediafiles/mediafile_list.html -->
+{% extends 'base.html' %}
+
+{% block body%}
+<body>
+    <h1>List of Media Files</h1>
+
+    <ul>
+        {% for mediafile in mediafiles %}
+            <li>
+                <a href="{{ mediafile.file.url }}">{{ mediafile.file.name }}</a>
+                (uploaded at: {{ mediafile.uploaded_at }})
+            </li>
+        {% empty %}
+            <li>No media files found.</li>
+        {% endfor %}
+    </ul>
+</body>
+{% endblock %}
