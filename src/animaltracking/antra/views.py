@@ -28,15 +28,16 @@ class MyLoginView(LoginView):
 from django.views.generic import ListView
 from .models import MediaFile
 
+
 class MediaFileListView(ListView):
     model = MediaFile
-    template_name = 'antra/mediafile_list.html'
-    context_object_name = 'mediafiles'
+    template_name = "antra/mediafile_list.html"
+    context_object_name = "mediafiles"
     paginate_by = 10  # Display 10 media files per page
 
     # Optionally, you can add custom ordering, pagination, etc.
     # For example, order by `uploaded_at`:
-    queryset = MediaFile.objects.all().order_by('-uploaded_at')
+    queryset = MediaFile.objects.all().order_by("-uploaded_at")
 
     # You can override `get_context_data()` if you need to add extra context to the template
     # def get_context_data(self, **kwargs):
@@ -44,9 +45,11 @@ class MediaFileListView(ListView):
     #     context['extra_data'] = 'Additional information if needed'
     #     return context
 
-def import_videos(request):
 
+def import_videos(request):
     import_dir = Path("/antra_import")
-    messages.info(request, f"Importing videos from {import_dir}, {list(import_dir.glob('*.*'))}")
+    messages.info(
+        request, f"Importing videos from {import_dir}, {list(import_dir.glob('*.*'))}"
+    )
 
     return redirect("antra:mediafile-list")

@@ -5,59 +5,123 @@ import django.db.models.deletion
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='Animal',
+            name="Animal",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=100)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("name", models.CharField(max_length=100)),
             ],
         ),
         migrations.CreateModel(
-            name='Camera',
+            name="Camera",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=100)),
-                ('ip', models.GenericIPAddressField()),
-                ('port', models.IntegerField()),
-                ('username', models.CharField(max_length=100)),
-                ('password', models.CharField(max_length=100)),
-                ('mediafile_dir', models.CharField(max_length=100)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("name", models.CharField(max_length=100)),
+                ("ip", models.GenericIPAddressField()),
+                ("port", models.IntegerField()),
+                ("username", models.CharField(max_length=100)),
+                ("password", models.CharField(max_length=100)),
+                ("mediafile_dir", models.CharField(max_length=100)),
             ],
         ),
         migrations.CreateModel(
-            name='MediaFile',
+            name="MediaFile",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('file', models.FileField(upload_to='media/')),
-                ('uploaded_at', models.DateTimeField(auto_now_add=True)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("file", models.FileField(upload_to="media/")),
+                ("uploaded_at", models.DateTimeField(auto_now_add=True)),
             ],
         ),
         migrations.CreateModel(
-            name='Track',
+            name="Track",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('json_track', models.JSONField()),
-                ('start_time', models.DateTimeField()),
-                ('end_time', models.DateTimeField()),
-                ('animal', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='antra.animal')),
-                ('camera', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='antra.camera')),
-                ('media_file', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='antra.mediafile')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("json_track", models.JSONField()),
+                ("start_time", models.DateTimeField()),
+                ("end_time", models.DateTimeField()),
+                (
+                    "animal",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to="antra.animal"
+                    ),
+                ),
+                (
+                    "camera",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to="antra.camera"
+                    ),
+                ),
+                (
+                    "media_file",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="antra.mediafile",
+                    ),
+                ),
             ],
         ),
         migrations.CreateModel(
-            name='AnimalEnclosure',
+            name="AnimalEnclosure",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('enclosure', models.CharField(max_length=100)),
-                ('animal', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='antra.animal')),
-                ('camera', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='antra.camera')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("enclosure", models.CharField(max_length=100)),
+                (
+                    "animal",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to="antra.animal"
+                    ),
+                ),
+                (
+                    "camera",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to="antra.camera"
+                    ),
+                ),
             ],
         ),
     ]
