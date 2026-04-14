@@ -15,6 +15,29 @@ import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+PROJECT_ROOT = BASE_DIR.parent.parent
+
+
+def load_dotenv(path: Path) -> None:
+    if not path.exists():
+        return
+    for raw_line in path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        os.environ.setdefault(key.strip(), value.strip().strip("'").strip('"'))
+
+
+def csv_env(name: str, default: list[str]) -> list[str]:
+    value = os.getenv(name)
+    if not value:
+        return default
+    items = [item.strip() for item in value.split(",")]
+    return [item for item in items if item]
+
+
+load_dotenv(PROJECT_ROOT / ".env")
 
 
 # Quick-start development settings - unsuitable for production
@@ -28,11 +51,15 @@ DEBUG = True
 
 ANTRA_HOST = os.getenv("ANTRA_HOST", default="localhost")
 
-ALLOWED_HOSTS = [
-    "127.0.0.1",
-    ".localhost",  # '.' allows to match both 'www.localhost' and 'localhost'
-    ANTRA_HOST,
-]
+ALLOWED_HOSTS = csv_env(
+    "ANTRA_ALLOWED_HOSTS",
+    [
+        "127.0.0.1",
+        "localhost",
+        ".localhost",  # '.' allows to match both 'www.localhost' and 'localhost'
+        ANTRA_HOST,
+    ],
+)
 CSRF_TRUSTED_ORIGINS = [
     "http://127.0.0.1:18080",
     "http://localhost:18080",
@@ -131,6 +158,8 @@ USE_TZ = True
 STATIC_URL = "static/"
 # STATIC_ROOT = Path(BASE_DIR) / "staticfiles"
 STATIC_ROOT = Path("/shared_data") / "staticfiles"
+MEDIA_URL = "media/"
+MEDIA_ROOT = BASE_DIR / "media"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field

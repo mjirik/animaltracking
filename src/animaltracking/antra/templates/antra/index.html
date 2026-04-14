@@ -1,22 +1,114 @@
 {% extends 'base.html' %}
 
-{% block body%}
-<div class="container">
-    <H2>{{ headline }} </H2>
-    <p>
-        {{ text }}
-    </p>
-    <a class="btn btn-primary" href="{{ next }}">{{next_text}}</a>
-    {% if next_secondary %}
-    <a class="btn btn-secondary" href="{{ next_secondary }}">{{next_text_secondary}}</a>
-    {% endif %}
-    {%  for key, value in key_value.items %}
-        <h3>{{ key }}</h3>
-        <p>
-        {% autoescape off %}
-            {{ value }}
-        {% endautoescape %}
-        </p>
+{% block head %}
+<meta http-equiv="refresh" content="5">
+<style>
+    .pen-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 16px;
+        padding: 16px;
+    }
+    .pen-card {
+        border: 1px solid #d9dee7;
+        border-radius: 8px;
+        overflow: hidden;
+        background: #fff;
+    }
+    .pen-media {
+        background: #f3f5f8;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .pen-media img {
+        width: 100%;
+        height: auto;
+        object-fit: contain;
+        display: block;
+    }
+    .pen-empty {
+        color: #5f6b7a;
+        font-size: 0.95rem;
+        padding: 16px;
+        text-align: center;
+    }
+    .pen-body {
+        padding: 12px 14px 14px;
+    }
+    .pen-title {
+        margin: 0 0 4px;
+        font-size: 1.1rem;
+    }
+    .pen-subtitle {
+        color: #5f6b7a;
+        font-size: 0.9rem;
+        margin-bottom: 12px;
+    }
+    .pen-metrics {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+    }
+    .pen-metric {
+        background: #f7f9fc;
+        border-radius: 8px;
+        padding: 10px;
+    }
+    .pen-metric-label {
+        color: #5f6b7a;
+        display: block;
+        font-size: 0.85rem;
+        margin-bottom: 4px;
+    }
+    .pen-metric-value {
+        font-size: 1.15rem;
+        font-weight: 600;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="pen-grid">
+    {% for pen in pen_cards %}
+    <section class="pen-card">
+        <div class="pen-media">
+            {% if pen.snapshot_url %}
+            <img src="{{ pen.snapshot_url }}" alt="{{ pen.name }}">
+            {% else %}
+            <div class="pen-empty">Zatím není k dispozici žádný snapshot.</div>
+            {% endif %}
+        </div>
+        <div class="pen-body">
+            <h2 class="pen-title">{{ pen.name }}</h2>
+            <div class="pen-subtitle">
+                Kamera {{ pen.camera_id }}, box {{ pen.pen_index }}
+                {% if pen.snapshot_updated_at %}
+                <br>Poslední aktualizace: {{ pen.snapshot_updated_at }}
+                {% endif %}
+            </div>
+            <div class="pen-metrics">
+                <div class="pen-metric">
+                    <span class="pen-metric-label">Dnes</span>
+                    <div class="pen-metric-value">{{ pen.today_distance_m|floatformat:1 }} m</div>
+                </div>
+                <div class="pen-metric">
+                    <span class="pen-metric-label">Včera</span>
+                    <div class="pen-metric-value">{{ pen.yesterday_distance_m|floatformat:1 }} m</div>
+                </div>
+                <div class="pen-metric">
+                    <span class="pen-metric-label">Posledních 7 dní</span>
+                    <div class="pen-metric-value">{{ pen.last_7_days_distance_m|floatformat:1 }} m</div>
+                </div>
+            </div>
+        </div>
+    </section>
+    {% empty %}
+    <section class="pen-card">
+        <div class="pen-body">
+            V `.env` zatím nejsou definované žádné PENy.
+        </div>
+    </section>
     {% endfor %}
 </div>
 {% endblock %}

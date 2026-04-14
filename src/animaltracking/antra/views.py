@@ -4,11 +4,19 @@ from django.contrib import messages
 from django.urls import reverse_lazy
 from pathlib import Path
 
+from .dashboard import build_dashboard_cards
+
 # Create your views here.
 
 
 def index(request):
-    return render(request, "antra/index.html")
+    return render(
+        request,
+        "antra/index.html",
+        {
+            "pen_cards": build_dashboard_cards(),
+        },
+    )
 
 
 class MyLoginView(LoginView):

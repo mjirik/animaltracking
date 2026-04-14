@@ -50,3 +50,37 @@ class Track(models.Model):
 
     def __str__(self):
         return f"{self.animal.name} - {self.camera.name} - {self.start_time} - {self.end_time}"
+
+
+class Pen(models.Model):
+    key = models.CharField(max_length=64, unique=True)
+    name = models.CharField(max_length=120)
+    camera_id = models.PositiveIntegerField()
+    pen_index = models.PositiveIntegerField()
+    roi_xyxy_norm_in_camroi = models.JSONField(default=list, blank=True)
+    is_active = models.BooleanField(default=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["camera_id", "pen_index"]
+
+    def __str__(self):
+        return self.name
+
+
+class PenState(models.Model):
+    pen = models.OneToOneField(Pen, on_delete=models.CASCADE, related_name="state")
+    snapshot_relative_path = models.CharField(max_length=255, blank=True)
+    snapshot_updated_at = models.DateTimeField(null=True, blank=True)
+    detections_json = models.JSONField(default=list, blank=True)
+    today_distance_m = models.FloatField(default=0.0)
+    yesterday_distance_m = models.FloatField(default=0.0)
+    last_7_days_distance_m = models.FloatField(default=0.0)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Pen state"
+        verbose_name_plural = "Pen states"
+
+    def __str__(self):
+        return f"State for {self.pen.name}"
