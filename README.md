@@ -44,11 +44,11 @@ conda run -n pigtracking python src/animaltracking/manage.py migrate
 Manual start in two terminals:
 
 ```bash
-conda run -n pigtracking python src/animaltracking/manage.py runserver 0.0.0.0:8000
+conda run --no-capture-output -n pigtracking python -u src/animaltracking/manage.py runserver 0.0.0.0:8000
 ```
 
 ```bash
-conda run -n pigtracking python src/animaltracking/manage.py run_pen_worker --device cuda:0 --threshold 0.25
+conda run --no-capture-output -n pigtracking python -u src/animaltracking/manage.py run_pen_worker --device cuda:0 --threshold 0.25
 ```
 
 Dashboard URL:
@@ -78,6 +78,13 @@ Logs are written to:
 ```text
 logs/pigtracking_dashboard/web.log
 logs/pigtracking_dashboard/worker.log
+```
+
+For live log monitoring:
+
+```bash
+tail -f logs/pigtracking_dashboard/web.log
+tail -f logs/pigtracking_dashboard/worker.log
 ```
 
 To stop both processes:
