@@ -1,7 +1,6 @@
 {% extends 'base.html' %}
 
 {% block head %}
-<meta http-equiv="refresh" content="5">
 <style>
     .pen-grid {
         display: grid;
@@ -66,40 +65,122 @@
         font-weight: 600;
     }
 </style>
+<script>
+    const PEN_POLL_INTERVAL_MS = 500;
+
+    function formatSnapshotTimestamp(value) {
+        if (!value) {
+            return '-';
+        }
+        const parsed = new Date(value);
+        if (Number.isNaN(parsed.getTime())) {
+            return value;
+        }
+        return parsed.toLocaleString('cs-CZ', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+        });
+    }
+
+    function updatePenCard(cardData) {
+        const card = document.querySelector(`[data-pen-key="${cardData.key}"]`);
+        if (!card) {
+            return;
+        }
+
+        const todayEl = card.querySelector('[data-role="today-distance"]');
+        const yesterdayEl = card.querySelector('[data-role="yesterday-distance"]');
+        const weeklyEl = card.querySelector('[data-role="weekly-distance"]');
+        const tracksEl = card.querySelector('[data-role="active-tracks"]');
+        const updatedEl = card.querySelector('[data-role="snapshot-updated-at"]');
+        const imageEl = card.querySelector('[data-role="snapshot-image"]');
+        const emptyEl = card.querySelector('[data-role="snapshot-empty"]');
+
+        todayEl.textContent = `${Number(cardData.today_distance_m).toFixed(1)} m`;
+        yesterdayEl.textContent = `${Number(cardData.yesterday_distance_m).toFixed(1)} m`;
+        weeklyEl.textContent = `${Number(cardData.last_7_days_distance_m).toFixed(1)} m`;
+        tracksEl.textContent = String(cardData.active_tracks);
+
+        updatedEl.textContent = formatSnapshotTimestamp(cardData.snapshot_updated_at);
+
+        if (cardData.snapshot_url) {
+            const cacheBustedUrl = `${cardData.snapshot_url}?t=${encodeURIComponent(cardData.snapshot_updated_at || Date.now())}`;
+            imageEl.src = cacheBustedUrl;
+            imageEl.alt = cardData.name;
+            imageEl.hidden = false;
+            emptyEl.hidden = true;
+        } else {
+            imageEl.hidden = true;
+            emptyEl.hidden = false;
+        }
+    }
+
+    async function refreshPens() {
+        try {
+            const response = await fetch("{% url 'antra:pens-api' %}", {
+                headers: { "X-Requested-With": "XMLHttpRequest" },
+                cache: "no-store",
+            });
+            if (!response.ok) {
+                return;
+            }
+            const payload = await response.json();
+            for (const pen of payload.pens) {
+                updatePenCard(pen);
+            }
+        } catch (error) {
+            console.debug('Pen refresh failed', error);
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('[data-role="snapshot-updated-at"]').forEach((element) => {
+            element.textContent = formatSnapshotTimestamp(element.textContent.trim());
+        });
+        window.setInterval(refreshPens, PEN_POLL_INTERVAL_MS);
+    });
+</script>
 {% endblock %}
 
 {% block body %}
 <div class="pen-grid">
     {% for pen in pen_cards %}
-    <section class="pen-card">
+    <section class="pen-card" data-pen-key="{{ pen.key }}">
         <div class="pen-media">
             {% if pen.snapshot_url %}
-            <img src="{{ pen.snapshot_url }}" alt="{{ pen.name }}">
+            <img data-role="snapshot-image" src="{{ pen.snapshot_url }}" alt="{{ pen.name }}">
             {% else %}
-            <div class="pen-empty">Zatím není k dispozici žádný snapshot.</div>
+            <img data-role="snapshot-image" hidden alt="{{ pen.name }}">
             {% endif %}
+            <div class="pen-empty" data-role="snapshot-empty" {% if pen.snapshot_url %}hidden{% endif %}>Zatím není k dispozici žádný snapshot.</div>
         </div>
         <div class="pen-body">
             <h2 class="pen-title">{{ pen.name }}</h2>
             <div class="pen-subtitle">
                 Kamera {{ pen.camera_id }}, box {{ pen.pen_index }}
                 {% if pen.snapshot_updated_at %}
-                <br>Poslední aktualizace: {{ pen.snapshot_updated_at }}
+                <br>Poslední aktualizace: <span data-role="snapshot-updated-at">{{ pen.snapshot_updated_at }}</span>
+                {% else %}
+                <br>Poslední aktualizace: <span data-role="snapshot-updated-at">-</span>
                 {% endif %}
-                <br>Aktivní tracky: {{ pen.active_tracks }}
+                <br>Aktivní tracky: <span data-role="active-tracks">{{ pen.active_tracks }}</span>
             </div>
             <div class="pen-metrics">
                 <div class="pen-metric">
                     <span class="pen-metric-label">Dnes</span>
-                    <div class="pen-metric-value">{{ pen.today_distance_m|floatformat:1 }} m</div>
+                    <div class="pen-metric-value" data-role="today-distance">{{ pen.today_distance_m|floatformat:1 }} m</div>
                 </div>
                 <div class="pen-metric">
                     <span class="pen-metric-label">Včera</span>
-                    <div class="pen-metric-value">{{ pen.yesterday_distance_m|floatformat:1 }} m</div>
+                    <div class="pen-metric-value" data-role="yesterday-distance">{{ pen.yesterday_distance_m|floatformat:1 }} m</div>
                 </div>
                 <div class="pen-metric">
                     <span class="pen-metric-label">Posledních 7 dní</span>
-                    <div class="pen-metric-value">{{ pen.last_7_days_distance_m|floatformat:1 }} m</div>
+                    <div class="pen-metric-value" data-role="weekly-distance">{{ pen.last_7_days_distance_m|floatformat:1 }} m</div>
                 </div>
             </div>
         </div>

@@ -2,9 +2,10 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.views import LoginView
 from django.contrib import messages
 from django.urls import reverse_lazy
+from django.http import JsonResponse
 from pathlib import Path
 
-from .dashboard import build_dashboard_cards
+from .dashboard import build_dashboard_cards, serialize_dashboard_card
 
 # Create your views here.
 
@@ -17,6 +18,11 @@ def index(request):
             "pen_cards": build_dashboard_cards(),
         },
     )
+
+
+def pens_api(request):
+    pen_cards = [serialize_dashboard_card(card) for card in build_dashboard_cards()]
+    return JsonResponse({"pens": pen_cards})
 
 
 class MyLoginView(LoginView):

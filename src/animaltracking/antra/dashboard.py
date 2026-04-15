@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+from dataclasses import asdict
 from dataclasses import dataclass
+from datetime import datetime
 
 from django.conf import settings
 from django.db import transaction
@@ -15,12 +17,21 @@ class DashboardPenCard:
     name: str
     camera_id: int
     pen_index: int
+    display_order: int
     active_tracks: int
     today_distance_m: float
     yesterday_distance_m: float
     last_7_days_distance_m: float
     snapshot_url: str | None
     snapshot_updated_at: object | None
+
+
+def serialize_dashboard_card(card: DashboardPenCard) -> dict[str, object]:
+    payload = asdict(card)
+    snapshot_updated_at = payload.get("snapshot_updated_at")
+    if isinstance(snapshot_updated_at, datetime):
+        payload["snapshot_updated_at"] = snapshot_updated_at.isoformat()
+    return payload
 
 
 def sync_pens_from_env() -> list[CameraEnvConfig]:
@@ -59,7 +70,13 @@ def snapshot_url_for(state: PenState) -> str | None:
 
 
 def build_dashboard_cards() -> list[DashboardPenCard]:
-    sync_pens_from_env()
+    env = load_dotenv()
+    camera_configs = parse_camera_configs(env)
+    display_order_by_key = {
+        pen_config.key: pen_config.display_order
+        for camera_config in camera_configs
+        for pen_config in camera_config.pens
+    }
     pens = Pen.objects.filter(is_active=True).select_related("state").order_by("camera_id", "pen_index")
     cards: list[DashboardPenCard] = []
     for pen in pens:
@@ -76,6 +93,7 @@ def build_dashboard_cards() -> list[DashboardPenCard]:
                 name=pen.name,
                 camera_id=pen.camera_id,
                 pen_index=pen.pen_index,
+                display_order=display_order_by_key.get(pen.key, pen.camera_id * 100 + pen.pen_index),
                 active_tracks=len(active_track_ids),
                 today_distance_m=state.today_distance_m if state else 0.0,
                 yesterday_distance_m=state.yesterday_distance_m if state else 0.0,
@@ -84,4 +102,4 @@ def build_dashboard_cards() -> list[DashboardPenCard]:
                 snapshot_updated_at=state.snapshot_updated_at if state else None,
             )
         )
-    return cards
+    return sorted(cards, key=lambda card: (card.display_order, card.camera_id, card.pen_index))

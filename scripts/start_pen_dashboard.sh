@@ -13,6 +13,7 @@ PORT="${ANTRA_PORT:-8000}"
 HOST="${ANTRA_BIND_HOST:-0.0.0.0}"
 DEVICE="${RFDETR_DEVICE:-cuda:0}"
 THRESHOLD="${PEN_WORKER_THRESHOLD:-0.25}"
+INTERVAL="${PEN_WORKER_INTERVAL:-0.5}"
 WEB_PATTERN="src/animaltracking/manage.py runserver ${HOST}:${PORT}"
 WORKER_PATTERN="src/animaltracking/manage.py run_pen_worker"
 PYTHON_BIN="${PIGTRACKING_PYTHON:-$HOME/miniconda3/envs/pigtracking/bin/python}"
@@ -125,7 +126,7 @@ start_worker() {
 
     (
         cd "$ROOT_DIR"
-        exec env PYTHONUNBUFFERED=1 "$PYTHON_BIN" -u src/animaltracking/manage.py run_pen_worker --device "$DEVICE" --threshold "$THRESHOLD"
+        exec env PYTHONUNBUFFERED=1 "$PYTHON_BIN" -u src/animaltracking/manage.py run_pen_worker --device "$DEVICE" --threshold "$THRESHOLD" --interval "$INTERVAL"
     ) >>"$WORKER_LOG" 2>&1 &
     echo $! >"$WORKER_PID_FILE"
     echo "Started worker with PID $(cat "$WORKER_PID_FILE")"
