@@ -71,23 +71,12 @@
 <!--    </nav>&lt;!&ndash; End Icons Navigation &ndash;&gt;-->
 
 <!--  </header>-->
-<div class="mb-2 pt-3 px-2 bg-light pb-0 text-center">
-    <h1>Animal Tracking</h1>
-    <p class="text pb-0 mb-0">Analysis of the animal track</p>
-
+<div class="px-3 py-2 border-bottom bg-light">
     <nav class="navbar navbar-expand-lg navbar-light bg-light px-0 py-0">
-        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <a class="navbar-brand fw-semibold me-3" href="{% url 'antra:dashboard' %}">AnTra</a>
+        <div class="collapse navbar-collapse d-flex" id="navbarSupportedContent">
             <ul class="navbar-nav mr-auto">
-                <li class="nav-item">
-<!--                    <a class="nav-link" href="">Upload</a>-->
-                </li>
                 {% if user.is_authenticated %}
-<!--                    <li class="nav-item">-->
-
-<!--                    <li class="nav-item">-->
-<!--                    </li>-->
-<!--                    <li class="nav-item">-->
-<!--                    </li>-->
                 {% endif %}
                 <li class="nav-item">
                     <a class="nav-link" href="{% url 'antra:dashboard' %}">Dashboard</a>
@@ -119,7 +108,7 @@
             <!--        </li>-->
             <!--        {% endif %}-->
         <!--    </ul>-->
-        <div class="navbar-nav flex-row flex-wrap ml-auto">
+        <div class="navbar-nav flex-row flex-wrap ms-auto">
 
             <!--              <ul class="d-flex align-items-center">-->
 
