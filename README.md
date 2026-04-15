@@ -33,7 +33,7 @@ docker compose -f docker-compose.yml up --build -d
 The current PEN dashboard uses two long-running processes:
 
 1. Django web server
-2. PEN worker that reads the latest camera snapshots, crops PEN images, runs RF-DETR detection, and writes dashboard images
+2. PEN worker that reads RTSP cameras directly, crops PEN images, runs RF-DETR detection, and writes dashboard images
 
 Before the first run:
 
@@ -49,6 +49,12 @@ conda run --no-capture-output -n pigtracking python -u src/animaltracking/manage
 
 ```bash
 conda run --no-capture-output -n pigtracking python -u src/animaltracking/manage.py run_pen_worker --device cuda:0 --threshold 0.25
+```
+
+Optional timeout for one RTSP capture:
+
+```bash
+conda run --no-capture-output -n pigtracking python -u src/animaltracking/manage.py run_pen_worker --device cuda:0 --threshold 0.25 --capture-timeout 30
 ```
 
 Dashboard URL:

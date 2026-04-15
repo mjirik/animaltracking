@@ -7,6 +7,7 @@ from pathlib import Path
 
 
 ROI_VALUE_COUNT = 4
+CAMERA_URL_ENV_NAMES = ("RTSP_CAM{camera_id}", "CAMERA{camera_id}_URL")
 PEN_PATTERN = re.compile(
     r"^RTSP_CAM(?P<camera_id>\d+)_PEN(?P<pen_index>\d+)_ROI_XYXY_NORM_IN_CAMROI$"
 )
@@ -24,6 +25,7 @@ class PenEnvConfig:
 @dataclass(frozen=True)
 class CameraEnvConfig:
     camera_id: int
+    rtsp_url: str | None
     camera_roi_xyxy_norm: tuple[float, float, float, float] | None
     pens: tuple[PenEnvConfig, ...]
 
@@ -72,7 +74,10 @@ def parse_camera_configs(env: dict[str, str] | None = None) -> list[CameraEnvCon
         if pen_match:
             camera_id = int(pen_match.group("camera_id"))
             pen_index = int(pen_match.group("pen_index"))
-            camera_entry = cameras.setdefault(camera_id, {"camera_roi": None, "pens": []})
+            camera_entry = cameras.setdefault(
+                camera_id,
+                {"camera_roi": None, "pens": [], "rtsp_url": None},
+            )
             pen_name_key = f"RTSP_CAM{camera_id}_PEN{pen_index}_NAME"
             pen_name = config.get(pen_name_key, f"Camera {camera_id} Pen {pen_index}")
             camera_entry["pens"].append(
@@ -90,8 +95,29 @@ def parse_camera_configs(env: dict[str, str] | None = None) -> list[CameraEnvCon
         roi_suffix = "_ROI_XYXY_NORM"
         if key.startswith(roi_prefix) and key.endswith(roi_suffix):
             camera_id = int(key[len(roi_prefix) : -len(roi_suffix)])
-            camera_entry = cameras.setdefault(camera_id, {"camera_roi": None, "pens": []})
+            camera_entry = cameras.setdefault(camera_id, {"camera_roi": None, "pens": [], "rtsp_url": None})
             camera_entry["camera_roi"] = parse_roi(value)
+
+        if key.startswith("RTSP_CAM") and key[8:].isdigit():
+            camera_id = int(key[8:])
+            camera_entry = cameras.setdefault(camera_id, {"camera_roi": None, "pens": [], "rtsp_url": None})
+            camera_entry["rtsp_url"] = value
+
+        if key.startswith("CAMERA") and key.endswith("_URL") and key[6:-4].isdigit():
+            camera_id = int(key[6:-4])
+            camera_entry = cameras.setdefault(camera_id, {"camera_roi": None, "pens": [], "rtsp_url": None})
+            if not camera_entry["rtsp_url"]:
+                camera_entry["rtsp_url"] = value
+
+    for camera_id in list(cameras):
+        camera_entry = cameras[camera_id]
+        if camera_entry.get("rtsp_url"):
+            continue
+        for template in CAMERA_URL_ENV_NAMES:
+            env_name = template.format(camera_id=camera_id)
+            if config.get(env_name):
+                camera_entry["rtsp_url"] = config[env_name]
+                break
 
     configs: list[CameraEnvConfig] = []
     for camera_id in sorted(cameras):
@@ -100,6 +126,7 @@ def parse_camera_configs(env: dict[str, str] | None = None) -> list[CameraEnvCon
         configs.append(
             CameraEnvConfig(
                 camera_id=camera_id,
+                rtsp_url=cameras[camera_id]["rtsp_url"],
                 camera_roi_xyxy_norm=cameras[camera_id]["camera_roi"],
                 pens=pens,
             )
