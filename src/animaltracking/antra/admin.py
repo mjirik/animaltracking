@@ -41,7 +41,7 @@ class PenStateInline(admin.StackedInline):
 
 @admin.register(Pen)
 class PenAdmin(admin.ModelAdmin):
-    list_display = ("id", "key", "name", "camera_id", "pen_index", "is_active", "updated_at")
+    list_display = ("id", "key", "name", "camera_id", "pen_index", "image_height_m", "is_active", "updated_at")
     list_filter = ("camera_id", "is_active")
     search_fields = ("key", "name")
     inlines = [PenStateInline]

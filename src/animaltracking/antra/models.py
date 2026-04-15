@@ -58,6 +58,7 @@ class Pen(models.Model):
     camera_id = models.PositiveIntegerField()
     pen_index = models.PositiveIntegerField()
     roi_xyxy_norm_in_camroi = models.JSONField(default=list, blank=True)
+    image_height_m = models.FloatField(default=2.0)
     is_active = models.BooleanField(default=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -73,6 +74,8 @@ class PenState(models.Model):
     snapshot_relative_path = models.CharField(max_length=255, blank=True)
     snapshot_updated_at = models.DateTimeField(null=True, blank=True)
     detections_json = models.JSONField(default=list, blank=True)
+    tracking_state_json = models.JSONField(default=dict, blank=True)
+    daily_distance_json = models.JSONField(default=dict, blank=True)
     today_distance_m = models.FloatField(default=0.0)
     yesterday_distance_m = models.FloatField(default=0.0)
     last_7_days_distance_m = models.FloatField(default=0.0)

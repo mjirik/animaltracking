@@ -15,6 +15,7 @@ class DashboardPenCard:
     name: str
     camera_id: int
     pen_index: int
+    active_tracks: int
     today_distance_m: float
     yesterday_distance_m: float
     last_7_days_distance_m: float
@@ -38,6 +39,7 @@ def sync_pens_from_env() -> list[CameraEnvConfig]:
                         "camera_id": pen_config.camera_id,
                         "pen_index": pen_config.pen_index,
                         "roi_xyxy_norm_in_camroi": list(pen_config.roi_xyxy_norm_in_camroi),
+                        "image_height_m": pen_config.image_height_m,
                         "is_active": True,
                     },
                 )
@@ -62,12 +64,19 @@ def build_dashboard_cards() -> list[DashboardPenCard]:
     cards: list[DashboardPenCard] = []
     for pen in pens:
         state = getattr(pen, "state", None)
+        detections = state.detections_json if state and isinstance(state.detections_json, list) else []
+        active_track_ids = {
+            detection.get("tracker_id")
+            for detection in detections
+            if detection.get("tracker_id") is not None
+        }
         cards.append(
             DashboardPenCard(
                 key=pen.key,
                 name=pen.name,
                 camera_id=pen.camera_id,
                 pen_index=pen.pen_index,
+                active_tracks=len(active_track_ids),
                 today_distance_m=state.today_distance_m if state else 0.0,
                 yesterday_distance_m=state.yesterday_distance_m if state else 0.0,
                 last_7_days_distance_m=state.last_7_days_distance_m if state else 0.0,

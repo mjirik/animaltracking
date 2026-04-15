@@ -78,6 +78,7 @@ def detection_rows(detections: Any, threshold: float) -> list[dict[str, Any]]:
     xyxy_values = getattr(detections, "xyxy", [])
     confidence_values = getattr(detections, "confidence", None)
     class_id_values = getattr(detections, "class_id", None)
+    tracker_id_values = getattr(detections, "tracker_id", None)
 
     rows: list[dict[str, Any]] = []
     for index, xyxy in enumerate(xyxy_values):
@@ -91,12 +92,19 @@ def detection_rows(detections: Any, threshold: float) -> list[dict[str, Any]]:
         if class_id_values is not None:
             class_id = int(class_id_values[index])
 
+        tracker_id = None
+        if tracker_id_values is not None:
+            tracker_id = int(tracker_id_values[index])
+            if tracker_id < 0:
+                tracker_id = None
+
         x1, y1, x2, y2 = [float(value) for value in xyxy]
         rows.append(
             {
                 "bbox_xyxy": [x1, y1, x2, y2],
                 "confidence": confidence,
                 "class_id": class_id,
+                "tracker_id": tracker_id,
             }
         )
     return rows
@@ -118,6 +126,10 @@ def label_for(row: dict[str, Any], class_map: dict[int, str]) -> str:
         label = "object"
     else:
         label = class_name_for_id(class_id, class_map) or f"class_{class_id}"
+
+    tracker_id = row.get("tracker_id")
+    if tracker_id is not None:
+        label = f"{label} #{tracker_id}"
 
     confidence = row["confidence"]
     if confidence is None:
