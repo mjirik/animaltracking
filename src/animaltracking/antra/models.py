@@ -87,3 +87,29 @@ class PenState(models.Model):
 
     def __str__(self):
         return f"State for {self.pen.name}"
+
+
+class PenActivityQuarterHour(models.Model):
+    pen = models.ForeignKey(Pen, on_delete=models.CASCADE, related_name="quarter_hour_activities")
+    label = models.CharField(max_length=64)
+    window_start = models.DateTimeField()
+    window_end = models.DateTimeField()
+    distance_total_m = models.FloatField(default=0.0)
+    distance_mean_per_track_m = models.FloatField(default=0.0)
+    distance_variance_per_track_m = models.FloatField(default=0.0)
+    present = models.BooleanField(default=False)
+    presence_seconds = models.FloatField(default=0.0)
+    first_seen_at = models.DateTimeField(null=True, blank=True)
+    last_seen_at = models.DateTimeField(null=True, blank=True)
+    track_count = models.PositiveIntegerField(default=0)
+    detection_count = models.PositiveIntegerField(default=0)
+    track_distance_json = models.JSONField(default=dict, blank=True)
+    seen_track_ids_json = models.JSONField(default=list, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-window_start", "pen_id", "label"]
+        unique_together = ("pen", "label", "window_start")
+
+    def __str__(self):
+        return f"{self.pen.name} {self.label} {self.window_start}"

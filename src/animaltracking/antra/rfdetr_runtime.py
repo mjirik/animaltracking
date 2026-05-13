@@ -142,7 +142,34 @@ def draw_predictions(
     rows: list[dict[str, Any]],
     class_map: dict[int, str],
 ) -> Image.Image:
-    annotated = image.copy().convert("RGB")
+    annotated = image.copy().convert("RGBA")
+    trail_overlay = Image.new("RGBA", annotated.size, (0, 0, 0, 0))
+    trail_draw = ImageDraw.Draw(trail_overlay)
+
+    for row in rows:
+        trajectory_points = row.get("trajectory_points") or []
+        if len(trajectory_points) < 2:
+            continue
+        for index in range(1, len(trajectory_points)):
+            start = trajectory_points[index - 1]
+            end = trajectory_points[index]
+            alpha = max(70, int(255 * (index / len(trajectory_points))))
+            trail_draw.line(
+                (float(start[0]), float(start[1]), float(end[0]), float(end[1])),
+                fill=(0, 255, 255, alpha),
+                width=6,
+            )
+        for index, point in enumerate(trajectory_points):
+            alpha = max(70, int(255 * ((index + 1) / len(trajectory_points))))
+            radius = 3 if index < len(trajectory_points) - 1 else 5
+            x, y = float(point[0]), float(point[1])
+            trail_draw.ellipse(
+                (x - radius, y - radius, x + radius, y + radius),
+                fill=(0, 255, 255, alpha),
+                outline=(255, 255, 255, alpha),
+            )
+
+    annotated = Image.alpha_composite(annotated, trail_overlay)
     draw = ImageDraw.Draw(annotated)
     for row in rows:
         x1, y1, x2, y2 = row["bbox_xyxy"]
@@ -151,4 +178,4 @@ def draw_predictions(
         text_bbox = draw.textbbox((x1, y1), label)
         draw.rectangle(text_bbox, fill="red")
         draw.text((x1, y1), label, fill="white")
-    return annotated
+    return annotated.convert("RGB")

@@ -21,6 +21,7 @@ class PenEnvConfig:
     name: str
     roi_xyxy_norm_in_camroi: tuple[float, float, float, float]
     image_height_m: float
+    display_order: int
 
 
 @dataclass(frozen=True)
@@ -74,6 +75,13 @@ def parse_positive_float(value: str, label: str) -> float:
     return parsed
 
 
+def parse_integer(value: str, label: str) -> int:
+    try:
+        return int(value)
+    except ValueError as exc:
+        raise ValueError(f"{label} must be an integer value: {value}") from exc
+
+
 def parse_camera_configs(env: dict[str, str] | None = None) -> list[CameraEnvConfig]:
     config = dict(os.environ)
     if env:
@@ -91,10 +99,15 @@ def parse_camera_configs(env: dict[str, str] | None = None) -> list[CameraEnvCon
             )
             pen_name_key = f"RTSP_CAM{camera_id}_PEN{pen_index}_NAME"
             pen_height_key = f"RTSP_CAM{camera_id}_PEN{pen_index}_IMAGE_HEIGHT_M"
+            pen_display_order_key = f"RTSP_CAM{camera_id}_PEN{pen_index}_DISPLAY_ORDER"
             pen_name = config.get(pen_name_key, f"Camera {camera_id} Pen {pen_index}")
             pen_image_height_m = parse_positive_float(
                 config.get(pen_height_key, "2.0"),
                 pen_height_key,
+            )
+            pen_display_order = parse_integer(
+                config.get(pen_display_order_key, str(camera_id * 100 + pen_index)),
+                pen_display_order_key,
             )
             camera_entry["pens"].append(
                 PenEnvConfig(
@@ -104,6 +117,7 @@ def parse_camera_configs(env: dict[str, str] | None = None) -> list[CameraEnvCon
                     name=pen_name,
                     roi_xyxy_norm_in_camroi=parse_roi(value),
                     image_height_m=pen_image_height_m,
+                    display_order=pen_display_order,
                 )
             )
             continue

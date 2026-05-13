@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Animal, AnimalEnclosure, Camera, MediaFile, Pen, PenState, Track
+from .models import Animal, AnimalEnclosure, Camera, MediaFile, Pen, PenActivityQuarterHour, PenState, Track
 
 
 @admin.register(MediaFile)
@@ -60,3 +60,20 @@ class PenStateAdmin(admin.ModelAdmin):
         "updated_at",
     )
     search_fields = ("pen__key", "pen__name", "snapshot_relative_path")
+
+
+@admin.register(PenActivityQuarterHour)
+class PenActivityQuarterHourAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "pen",
+        "label",
+        "window_start",
+        "distance_total_m",
+        "present",
+        "presence_seconds",
+        "track_count",
+        "detection_count",
+    )
+    list_filter = ("label", "present", "pen__camera_id")
+    search_fields = ("pen__key", "pen__name", "label")
