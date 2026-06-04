@@ -33,6 +33,28 @@ def class_map_path() -> Path:
     return project_root() / "models" / "pigtracking_rfdetr_best.classes.json"
 
 
+def metadata_path() -> Path:
+    return project_root() / "models" / "pigtracking_rfdetr_best.metadata.json"
+
+
+def load_metadata(path: Path | None = None) -> dict[str, Any]:
+    resolved = path or metadata_path()
+    if not resolved.exists():
+        return {}
+    data = json.loads(resolved.read_text(encoding="utf-8"))
+    if isinstance(data, dict):
+        return data
+    return {}
+
+
+def default_model_size() -> str:
+    metadata = load_metadata()
+    model_size = str(metadata.get("model_size") or "").strip().lower()
+    if model_size in MODEL_CLASSES:
+        return model_size
+    return "nano"
+
+
 def load_class_map(path: Path | None = None) -> dict[int, str]:
     resolved = path or class_map_path()
     if not resolved.exists():
@@ -42,7 +64,7 @@ def load_class_map(path: Path | None = None) -> dict[int, str]:
 
 
 def build_model(
-    model_size: str = "nano",
+    model_size: str | None = None,
     checkpoint: Path | None = None,
     device: str | None = None,
     num_classes: int | None = None,
@@ -51,7 +73,8 @@ def build_model(
     if not checkpoint_path.exists():
         raise FileNotFoundError(f"Model checkpoint not found: {checkpoint_path}")
 
-    class_name = MODEL_CLASSES[model_size]
+    resolved_model_size = model_size or default_model_size()
+    class_name = MODEL_CLASSES[resolved_model_size]
     try:
         model_class = getattr(rfdetr, class_name)
     except (AttributeError, ImportError) as exc:
@@ -113,10 +136,12 @@ def detection_rows(detections: Any, threshold: float) -> list[dict[str, Any]]:
 def class_name_for_id(class_id: int | None, class_map: dict[int, str]) -> str | None:
     if class_id is None:
         return None
+    # The stored class map follows COCO category ids (typically 1-based),
+    # while RF-DETR prediction class ids are 0-based.
+    if 0 not in class_map and (class_id + 1) in class_map:
+        return class_map.get(class_id + 1)
     if class_id in class_map:
         return class_map[class_id]
-    if class_id == 0 or (0 not in class_map and (class_id + 1) in class_map):
-        return class_map.get(class_id + 1)
     return None
 
 

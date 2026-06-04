@@ -8,6 +8,7 @@ urlpatterns = [
     path("", views.index, name="index"),
     path("dashboard/", views.index, name="dashboard"),
     path("api/pens/", views.pens_api, name="pens-api"),
+    path("export/activity.csv", views.export_activity_csv, name="export-activity-csv"),
     path("login", views.MyLoginView.as_view(), name="login"),
     # path("import_videos", views.import_videos, name="import_videos"),
     path("mediafiles/", views.MediaFileListView.as_view(), name="mediafile-list"),

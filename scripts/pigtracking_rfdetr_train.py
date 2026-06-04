@@ -70,6 +70,20 @@ def parse_args() -> argparse.Namespace:
         default=Path("models") / "pigtracking_rfdetr_best.pth",
         help="Stable path where checkpoint_best_total.pth is copied after training.",
     )
+    parser.add_argument(
+        "--wandb",
+        action="store_true",
+        help="Enable Weights & Biases logging in RF-DETR.",
+    )
+    parser.add_argument(
+        "--project",
+        default="pigtracking",
+        help="Optional logging project name passed to RF-DETR loggers such as W&B.",
+    )
+    parser.add_argument(
+        "--run-name",
+        help="Optional run name passed to RF-DETR loggers such as W&B.",
+    )
     return parser.parse_args()
 
 
@@ -121,6 +135,12 @@ def main() -> None:
         "output_dir": str(output_dir),
         "device": args.device,
     }
+    if args.wandb:
+        train_kwargs["wandb"] = True
+    if args.project is not None:
+        train_kwargs["project"] = args.project
+    if args.run_name is not None:
+        train_kwargs["run"] = args.run_name
     if args.resolution is not None:
         train_kwargs["resolution"] = args.resolution
     if args.resume is not None:
@@ -155,6 +175,9 @@ def main() -> None:
         "grad_accum_steps": args.grad_accum_steps,
         "lr": args.lr,
         "resolution": args.resolution,
+        "wandb": args.wandb,
+        "project": args.project,
+        "run_name": args.run_name,
     }
     (stable_output.with_suffix(".metadata.json")).write_text(
         json.dumps(metadata, indent=2) + "\n",

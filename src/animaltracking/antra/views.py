@@ -6,6 +6,7 @@ from django.http import JsonResponse
 from pathlib import Path
 
 from .dashboard import build_dashboard_cards, serialize_dashboard_card
+from .export_utils import activity_export_queryset, build_activity_csv_response
 
 # Create your views here.
 
@@ -23,6 +24,17 @@ def index(request):
 def pens_api(request):
     pen_cards = [serialize_dashboard_card(card) for card in build_dashboard_cards()]
     return JsonResponse({"pens": pen_cards})
+
+
+def export_activity_csv(request):
+    queryset = activity_export_queryset()
+    label = request.GET.get("label")
+    if label:
+        queryset = queryset.filter(label=label)
+    pen_key = request.GET.get("pen")
+    if pen_key:
+        queryset = queryset.filter(pen__key=pen_key)
+    return build_activity_csv_response(queryset=queryset)
 
 
 class MyLoginView(LoginView):

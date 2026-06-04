@@ -103,8 +103,15 @@ class PenActivityQuarterHour(models.Model):
     last_seen_at = models.DateTimeField(null=True, blank=True)
     track_count = models.PositiveIntegerField(default=0)
     detection_count = models.PositiveIntegerField(default=0)
+    sample_count = models.PositiveIntegerField(default=0)
+    concurrent_count_mean = models.FloatField(default=0.0)
+    concurrent_count_max = models.PositiveIntegerField(default=0)
+    concurrent_count_mode = models.PositiveIntegerField(default=0)
+    concurrent_count_histogram_json = models.JSONField(default=dict, blank=True)
     track_distance_json = models.JSONField(default=dict, blank=True)
     seen_track_ids_json = models.JSONField(default=list, blank=True)
+    snapshot_relative_path = models.CharField(max_length=255, blank=True)
+    snapshot_captured_at = models.DateTimeField(null=True, blank=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:

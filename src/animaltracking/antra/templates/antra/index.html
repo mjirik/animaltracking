@@ -19,6 +19,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
+        position: relative;
     }
     .pen-media img {
         width: 100%;
@@ -32,37 +33,197 @@
         padding: 16px;
         text-align: center;
     }
+    .pen-image-timestamp {
+        position: absolute;
+        left: 8px;
+        bottom: 8px;
+        border-radius: 4px;
+        background: rgba(23, 33, 43, 0.86);
+        color: #fff;
+        font-size: 0.75rem;
+        line-height: 1.2;
+        padding: 4px 6px;
+        pointer-events: none;
+    }
+    .pen-image-timestamp[hidden] {
+        display: none;
+    }
     .pen-body {
-        padding: 12px 14px 14px;
+        padding: 10px 12px 12px;
+    }
+    .pen-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 8px;
+        margin-bottom: 8px;
     }
     .pen-title {
-        margin: 0 0 4px;
+        margin: 0;
         font-size: 1.1rem;
     }
-    .pen-subtitle {
-        color: #5f6b7a;
+    .pen-info {
+        position: relative;
+        flex: 0 0 auto;
+    }
+    .pen-info-toggle {
+        width: 24px;
+        height: 24px;
+        border: 1px solid #c8d1dd;
+        border-radius: 999px;
+        background: #f7f9fc;
+        color: #46607c;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
         font-size: 0.9rem;
-        margin-bottom: 12px;
+        font-weight: 600;
+        list-style: none;
+        user-select: none;
+    }
+    .pen-info-toggle::-webkit-details-marker {
+        display: none;
+    }
+    .pen-info[open] .pen-info-toggle {
+        background: #e9f0f7;
+        border-color: #9db7d6;
+    }
+    .pen-info-panel {
+        position: absolute;
+        top: 30px;
+        right: 0;
+        z-index: 10;
+        min-width: 220px;
+        border: 1px solid #d9dee7;
+        border-radius: 8px;
+        background: #fff;
+        box-shadow: 0 8px 24px rgba(17, 24, 39, 0.12);
+        padding: 10px 12px;
+    }
+    .pen-info-list {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        display: grid;
+        gap: 6px;
+    }
+    .pen-info-item {
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+        font-size: 0.85rem;
+    }
+    .pen-info-label {
+        color: #5f6b7a;
+    }
+    .pen-info-value {
+        color: #17212b;
+        font-weight: 500;
+        text-align: right;
     }
     .pen-metrics {
         display: grid;
         grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 8px;
+        gap: 6px;
     }
     .pen-metric {
         background: #f7f9fc;
         border-radius: 8px;
-        padding: 10px;
+        padding: 8px 9px;
     }
     .pen-metric-label {
         color: #5f6b7a;
         display: block;
-        font-size: 0.85rem;
-        margin-bottom: 4px;
+        font-size: 0.8rem;
+        margin-bottom: 3px;
     }
     .pen-metric-value {
-        font-size: 1.15rem;
+        font-size: 1.05rem;
         font-weight: 600;
+    }
+    .pen-activity {
+        margin-top: 10px;
+    }
+    .pen-activity-title {
+        color: #5f6b7a;
+        font-size: 0.8rem;
+        margin-bottom: 5px;
+    }
+    .pen-caretaker {
+        margin-top: 8px;
+    }
+    .pen-caretaker-title {
+        color: #5f6b7a;
+        font-size: 0.8rem;
+        margin-bottom: 4px;
+    }
+    .pen-activity-chart {
+        display: grid;
+        grid-template-columns: repeat(96, minmax(0, 1fr));
+        gap: 1px;
+        align-items: end;
+        min-height: 72px;
+        position: relative;
+    }
+    .pen-activity-bar-wrap {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2px;
+        min-width: 0;
+    }
+    .pen-activity-bar {
+        width: 100%;
+        min-height: 6px;
+        border-radius: 4px 4px 0 0;
+        background: #9db7d6;
+        transition: height 0.2s ease, opacity 0.2s ease, background-color 0.2s ease;
+    }
+    .pen-activity-bar.is-present {
+        background: #2f6fb1;
+    }
+    .pen-activity-label {
+        color: #5f6b7a;
+        font-size: 0.58rem;
+        line-height: 1;
+        min-height: 0.7rem;
+        text-align: center;
+        white-space: nowrap;
+    }
+    .pen-activity-tooltip {
+        position: absolute;
+        left: 0;
+        bottom: 100%;
+        transform: translate(-50%, -6px);
+        z-index: 5;
+        pointer-events: none;
+        background: rgba(23, 33, 43, 0.96);
+        color: #fff;
+        border-radius: 4px;
+        padding: 4px 6px;
+        font-size: 0.72rem;
+        line-height: 1.15;
+        white-space: nowrap;
+        box-shadow: 0 4px 10px rgba(17, 24, 39, 0.18);
+    }
+    .pen-activity-tooltip[hidden] {
+        display: none;
+    }
+    .pen-caretaker-strip {
+        display: grid;
+        grid-template-columns: repeat(96, minmax(0, 1fr));
+        gap: 1px;
+        min-height: 10px;
+        align-items: stretch;
+    }
+    .pen-caretaker-cell {
+        min-height: 10px;
+        background: #eef3f8;
+        border-radius: 2px;
+    }
+    .pen-caretaker-cell.is-present {
+        background: #2f6fb1;
     }
 </style>
 <script>
@@ -76,7 +237,7 @@
         if (Number.isNaN(parsed.getTime())) {
             return value;
         }
-        return parsed.toLocaleString('cs-CZ', {
+        return parsed.toLocaleString('en-GB', {
             year: 'numeric',
             month: '2-digit',
             day: '2-digit',
@@ -84,6 +245,70 @@
             minute: '2-digit',
             second: '2-digit',
         });
+    }
+
+    function cacheBustedSnapshotUrl(url, timestamp) {
+        if (!url) {
+            return '';
+        }
+        return `${url}?t=${encodeURIComponent(timestamp || Date.now())}`;
+    }
+
+    function setSnapshotDisplay(card, url, timestamp, label, altText) {
+        const imageEl = card.querySelector('[data-role="snapshot-image"]');
+        const emptyEl = card.querySelector('[data-role="snapshot-empty"]');
+        const captionEl = card.querySelector('[data-role="snapshot-caption"]');
+
+        if (url) {
+            imageEl.src = cacheBustedSnapshotUrl(url, timestamp);
+            imageEl.alt = altText || 'Pen snapshot';
+            imageEl.hidden = false;
+            emptyEl.hidden = true;
+            captionEl.textContent = `${label}: ${formatSnapshotTimestamp(timestamp)}`;
+            captionEl.hidden = false;
+        } else {
+            imageEl.hidden = true;
+            emptyEl.hidden = false;
+            captionEl.hidden = true;
+        }
+    }
+
+    function restoreLatestSnapshot(card) {
+        card.dataset.activityPreviewActive = 'false';
+        setSnapshotDisplay(
+            card,
+            card.dataset.latestSnapshotUrl || '',
+            card.dataset.latestSnapshotUpdatedAt || '',
+            'Latest',
+            card.dataset.latestSnapshotAlt || 'Pen snapshot'
+        );
+    }
+
+    function showActivitySnapshotPreview(chart, bar) {
+        const card = chart.closest('[data-pen-key]');
+        if (!card) {
+            return;
+        }
+        const snapshotUrl = bar.dataset.snapshotUrl || '';
+        if (!snapshotUrl) {
+            restoreLatestSnapshot(card);
+            return;
+        }
+        card.dataset.activityPreviewActive = 'true';
+        setSnapshotDisplay(
+            card,
+            snapshotUrl,
+            bar.dataset.snapshotCapturedAt || bar.dataset.windowStart || '',
+            'Selected',
+            card.dataset.latestSnapshotAlt || 'Pen snapshot'
+        );
+    }
+
+    function hideActivitySnapshotPreview(chart) {
+        const card = chart.closest('[data-pen-key]');
+        if (card) {
+            restoreLatestSnapshot(card);
+        }
     }
 
     function updatePenCard(cardData) {
@@ -97,8 +322,7 @@
         const weeklyEl = card.querySelector('[data-role="weekly-distance"]');
         const tracksEl = card.querySelector('[data-role="active-tracks"]');
         const updatedEl = card.querySelector('[data-role="snapshot-updated-at"]');
-        const imageEl = card.querySelector('[data-role="snapshot-image"]');
-        const emptyEl = card.querySelector('[data-role="snapshot-empty"]');
+        const caretakerVisitEl = card.querySelector('[data-role="last-caretaker-visit-at"]');
 
         todayEl.textContent = `${Number(cardData.today_distance_m).toFixed(1)} m`;
         yesterdayEl.textContent = `${Number(cardData.yesterday_distance_m).toFixed(1)} m`;
@@ -106,17 +330,85 @@
         tracksEl.textContent = String(cardData.active_tracks);
 
         updatedEl.textContent = formatSnapshotTimestamp(cardData.snapshot_updated_at);
+        caretakerVisitEl.textContent = formatSnapshotTimestamp(cardData.last_caretaker_visit_at);
 
-        if (cardData.snapshot_url) {
-            const cacheBustedUrl = `${cardData.snapshot_url}?t=${encodeURIComponent(cardData.snapshot_updated_at || Date.now())}`;
-            imageEl.src = cacheBustedUrl;
-            imageEl.alt = cardData.name;
-            imageEl.hidden = false;
-            emptyEl.hidden = true;
-        } else {
-            imageEl.hidden = true;
-            emptyEl.hidden = false;
+        card.dataset.latestSnapshotUrl = cardData.snapshot_url || '';
+        card.dataset.latestSnapshotUpdatedAt = cardData.snapshot_updated_at || '';
+        card.dataset.latestSnapshotAlt = cardData.name || 'Pen snapshot';
+        if (card.dataset.activityPreviewActive !== 'true') {
+            restoreLatestSnapshot(card);
         }
+
+        renderActivityChart(card, cardData.activity_last_24h || []);
+        renderCaretakerPresence(card, cardData.caretaker_presence_last_24h || []);
+    }
+
+    function renderActivityChart(card, activityPoints) {
+        const chart = card.querySelector('[data-role="activity-chart"]');
+        if (!chart) {
+            return;
+        }
+
+        const maxDistance = activityPoints.reduce((maxValue, point) => {
+            return Math.max(maxValue, Number(point.distance_total_m || 0));
+        }, 0);
+
+        chart.querySelectorAll('[data-role="activity-bar-wrap"]').forEach((wrap, index) => {
+            const point = activityPoints[index] || { distance_total_m: 0, short_label: '', display_label: '', present: false, snapshot_url: '', snapshot_captured_at: '', window_start: '' };
+            const bar = wrap.querySelector('[data-role="activity-bar"]');
+            const label = wrap.querySelector('[data-role="activity-label"]');
+            const value = Number(point.distance_total_m || 0);
+            const height = maxDistance > 0 ? Math.max(6, Math.round((value / maxDistance) * 72)) : 6;
+            const tooltipText = `${point.short_label}: ${value.toFixed(2)} m`;
+
+            bar.style.height = `${height}px`;
+            bar.classList.toggle('is-present', Boolean(point.present));
+            bar.style.opacity = point.present ? '1' : '0.35';
+            bar.dataset.tooltip = tooltipText;
+            bar.dataset.snapshotUrl = point.snapshot_url || '';
+            bar.dataset.snapshotCapturedAt = point.snapshot_captured_at || '';
+            bar.dataset.windowStart = point.window_start || '';
+            label.textContent = point.display_label || '';
+        });
+    }
+
+    function hideActivityTooltip(chart) {
+        const tooltip = chart.querySelector('[data-role="activity-tooltip"]');
+        if (!tooltip) {
+            return;
+        }
+        tooltip.hidden = true;
+    }
+
+    function showActivityTooltip(chart, bar) {
+        const tooltip = chart.querySelector('[data-role="activity-tooltip"]');
+        if (!tooltip) {
+            return;
+        }
+        const tooltipText = bar.dataset.tooltip || '';
+        if (!tooltipText) {
+            tooltip.hidden = true;
+            return;
+        }
+
+        const chartRect = chart.getBoundingClientRect();
+        const barRect = bar.getBoundingClientRect();
+        tooltip.textContent = tooltipText;
+        tooltip.hidden = false;
+        tooltip.style.left = `${barRect.left - chartRect.left + barRect.width / 2}px`;
+    }
+
+    function renderCaretakerPresence(card, presencePoints) {
+        const strip = card.querySelector('[data-role="caretaker-strip"]');
+        if (!strip) {
+            return;
+        }
+
+        strip.querySelectorAll('[data-role="caretaker-cell"]').forEach((cell, index) => {
+            const point = presencePoints[index] || { short_label: '', present: false };
+            cell.classList.toggle('is-present', Boolean(point.present));
+            cell.title = point.short_label ? `${point.short_label}: ${point.present ? 'caretaker present' : 'no caretaker'}` : '';
+        });
     }
 
     async function refreshPens() {
@@ -141,6 +433,47 @@
         document.querySelectorAll('[data-role="snapshot-updated-at"]').forEach((element) => {
             element.textContent = formatSnapshotTimestamp(element.textContent.trim());
         });
+        document.querySelectorAll('[data-role="last-caretaker-visit-at"]').forEach((element) => {
+            element.textContent = formatSnapshotTimestamp(element.textContent.trim());
+        });
+        document.querySelectorAll('[data-role="snapshot-caption"]').forEach((element) => {
+            const rawText = element.textContent.trim().replace(/^Latest:\s*/, '');
+            element.textContent = `Latest: ${formatSnapshotTimestamp(rawText)}`;
+        });
+        document.querySelectorAll('[data-pen-key]').forEach((card) => {
+            const imageEl = card.querySelector('[data-role="snapshot-image"]');
+            if (!card.dataset.latestSnapshotUrl && imageEl && !imageEl.hidden) {
+                card.dataset.latestSnapshotUrl = imageEl.getAttribute('src') || '';
+            }
+            if (!card.dataset.latestSnapshotAlt && imageEl) {
+                card.dataset.latestSnapshotAlt = imageEl.getAttribute('alt') || 'Pen snapshot';
+            }
+            card.dataset.activityPreviewActive = 'false';
+        });
+        document.querySelectorAll('[data-role="activity-chart"]').forEach((chart) => {
+            chart.addEventListener('mouseenter', (event) => {
+                const bar = event.target.closest('[data-role="activity-bar"]');
+                if (!bar || !chart.contains(bar)) {
+                    return;
+                }
+                showActivityTooltip(chart, bar);
+                showActivitySnapshotPreview(chart, bar);
+            }, true);
+            chart.addEventListener('mousemove', (event) => {
+                const bar = event.target.closest('[data-role="activity-bar"]');
+                if (!bar || !chart.contains(bar)) {
+                    hideActivityTooltip(chart);
+                    hideActivitySnapshotPreview(chart);
+                    return;
+                }
+                showActivityTooltip(chart, bar);
+                showActivitySnapshotPreview(chart, bar);
+            });
+            chart.addEventListener('mouseleave', () => {
+                hideActivityTooltip(chart);
+                hideActivitySnapshotPreview(chart);
+            });
+        });
         window.setInterval(refreshPens, PEN_POLL_INTERVAL_MS);
     });
 </script>
@@ -149,38 +482,98 @@
 {% block body %}
 <div class="pen-grid">
     {% for pen in pen_cards %}
-    <section class="pen-card" data-pen-key="{{ pen.key }}">
+    <section class="pen-card" data-pen-key="{{ pen.key }}" data-latest-snapshot-url="{{ pen.snapshot_url|default_if_none:'' }}" data-latest-snapshot-updated-at="{% if pen.snapshot_updated_at %}{{ pen.snapshot_updated_at|date:'c' }}{% endif %}" data-latest-snapshot-alt="{{ pen.name }}" data-activity-preview-active="false">
         <div class="pen-media">
             {% if pen.snapshot_url %}
             <img data-role="snapshot-image" src="{{ pen.snapshot_url }}" alt="{{ pen.name }}">
             {% else %}
             <img data-role="snapshot-image" hidden alt="{{ pen.name }}">
             {% endif %}
-            <div class="pen-empty" data-role="snapshot-empty" {% if pen.snapshot_url %}hidden{% endif %}>Zatím není k dispozici žádný snapshot.</div>
+            <div class="pen-empty" data-role="snapshot-empty" {% if pen.snapshot_url %}hidden{% endif %}>No snapshot is available yet.</div>
+            <div class="pen-image-timestamp" data-role="snapshot-caption" {% if not pen.snapshot_url %}hidden{% endif %}>Latest: {% if pen.snapshot_updated_at %}{{ pen.snapshot_updated_at|date:'c' }}{% else %}-{% endif %}</div>
         </div>
         <div class="pen-body">
-            <h2 class="pen-title">{{ pen.name }}</h2>
-            <div class="pen-subtitle">
-                Kamera {{ pen.camera_id }}, box {{ pen.pen_index }}
-                {% if pen.snapshot_updated_at %}
-                <br>Poslední aktualizace: <span data-role="snapshot-updated-at">{{ pen.snapshot_updated_at }}</span>
-                {% else %}
-                <br>Poslední aktualizace: <span data-role="snapshot-updated-at">-</span>
-                {% endif %}
-                <br>Aktivní tracky: <span data-role="active-tracks">{{ pen.active_tracks }}</span>
+            <div class="pen-header">
+                <h2 class="pen-title">{{ pen.name }}</h2>
+                <details class="pen-info">
+                    <summary class="pen-info-toggle" aria-label="Card details">i</summary>
+                    <div class="pen-info-panel">
+                        <ul class="pen-info-list">
+                            <li class="pen-info-item">
+                                <span class="pen-info-label">Camera</span>
+                                <span class="pen-info-value">{{ pen.camera_id }}</span>
+                            </li>
+                            <li class="pen-info-item">
+                                <span class="pen-info-label">PEN</span>
+                                <span class="pen-info-value">{{ pen.pen_index }}</span>
+                            </li>
+                            <li class="pen-info-item">
+                                <span class="pen-info-label">Active tracks</span>
+                                <span class="pen-info-value" data-role="active-tracks">{{ pen.active_tracks }}</span>
+                            </li>
+                            <li class="pen-info-item">
+                                <span class="pen-info-label">Last update</span>
+                                {% if pen.snapshot_updated_at %}
+                                <span class="pen-info-value" data-role="snapshot-updated-at">{{ pen.snapshot_updated_at }}</span>
+                                {% else %}
+                                <span class="pen-info-value" data-role="snapshot-updated-at">-</span>
+                                {% endif %}
+                            </li>
+                            <li class="pen-info-item">
+                                <span class="pen-info-label">Last caretaker visit</span>
+                                {% if pen.last_caretaker_visit_at %}
+                                <span class="pen-info-value" data-role="last-caretaker-visit-at">{{ pen.last_caretaker_visit_at }}</span>
+                                {% else %}
+                                <span class="pen-info-value" data-role="last-caretaker-visit-at">-</span>
+                                {% endif %}
+                            </li>
+                        </ul>
+                    </div>
+                </details>
             </div>
             <div class="pen-metrics">
                 <div class="pen-metric">
-                    <span class="pen-metric-label">Dnes</span>
+                    <span class="pen-metric-label">Today</span>
                     <div class="pen-metric-value" data-role="today-distance">{{ pen.today_distance_m|floatformat:1 }} m</div>
                 </div>
                 <div class="pen-metric">
-                    <span class="pen-metric-label">Včera</span>
+                    <span class="pen-metric-label">Yesterday</span>
                     <div class="pen-metric-value" data-role="yesterday-distance">{{ pen.yesterday_distance_m|floatformat:1 }} m</div>
                 </div>
                 <div class="pen-metric">
-                    <span class="pen-metric-label">Posledních 7 dní</span>
+                    <span class="pen-metric-label">Last 7 days</span>
                     <div class="pen-metric-value" data-role="weekly-distance">{{ pen.last_7_days_distance_m|floatformat:1 }} m</div>
+                </div>
+            </div>
+            <div class="pen-activity">
+                <div class="pen-activity-title">Pig activity over the last 24 hours</div>
+                <div class="pen-activity-chart" data-role="activity-chart">
+                    <div class="pen-activity-tooltip" data-role="activity-tooltip" hidden></div>
+                    {% for point in pen.activity_last_24h %}
+                    <div class="pen-activity-bar-wrap" data-role="activity-bar-wrap">
+                        <div
+                            class="pen-activity-bar{% if point.present %} is-present{% endif %}"
+                            data-role="activity-bar"
+                            data-tooltip="{{ point.short_label }}: {{ point.distance_total_m|floatformat:2 }} m"
+                            data-snapshot-url="{{ point.snapshot_url|default_if_none:'' }}"
+                            data-snapshot-captured-at="{{ point.snapshot_captured_at|default_if_none:'' }}"
+                            data-window-start="{{ point.window_start }}"
+                        ></div>
+                        <div class="pen-activity-label" data-role="activity-label">{{ point.display_label }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="pen-caretaker">
+                <div class="pen-caretaker-title">Caretaker presence over the last 24 hours</div>
+                <div class="pen-caretaker-strip" data-role="caretaker-strip">
+                    {% for point in pen.caretaker_presence_last_24h %}
+                    <div
+                        class="pen-caretaker-cell{% if point.present %} is-present{% endif %}"
+                        data-role="caretaker-cell"
+                        title="{{ point.short_label }}: {% if point.present %}caretaker present{% else %}no caretaker{% endif %}"
+                    ></div>
+                    {% endfor %}
                 </div>
             </div>
         </div>
@@ -188,7 +581,7 @@
     {% empty %}
     <section class="pen-card">
         <div class="pen-body">
-            V `.env` zatím nejsou definované žádné PENy.
+            No pens are defined in `.env` yet.
         </div>
     </section>
     {% endfor %}

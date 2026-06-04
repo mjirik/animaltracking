@@ -20,7 +20,7 @@ MODEL_CLASSES = {
     "medium": "RFDETRMedium",
     "large": "RFDETRLarge",
 }
-SUPPORTED_SUFFIXES = {".jpg", ".jpeg", ".png", ".bmp", ".tif", ".tiff"}
+SUPPORTED_SUFFIXES = {".jpg", ".jpeg", ".png", ".bmp", ".tif", ".tiff", ".webp"}
 
 
 def parse_args() -> argparse.Namespace:
@@ -101,10 +101,12 @@ def load_class_map(path: Path) -> dict[int, str]:
 def class_name_for_id(class_id: int | None, class_map: dict[int, str]) -> str | None:
     if class_id is None:
         return None
+    # Our saved class maps come from COCO category ids (typically 1-based),
+    # while RF-DETR prediction class ids are 0-based.
+    if 0 not in class_map and (class_id + 1) in class_map:
+        return class_map.get(class_id + 1)
     if class_id in class_map:
         return class_map[class_id]
-    if class_id == 0 or (0 not in class_map and (class_id + 1) in class_map):
-        return class_map.get(class_id + 1)
     return None
 
 

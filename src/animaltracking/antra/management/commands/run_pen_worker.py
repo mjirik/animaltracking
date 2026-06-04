@@ -4,6 +4,7 @@ import io
 import math
 import time
 import subprocess
+import threading
 from datetime import timedelta
 from pathlib import Path
 
@@ -12,6 +13,7 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.utils import timezone
 from PIL import Image
+import cv2
 import numpy as np
 import supervision as sv
 from trackers import ByteTrackTracker
@@ -99,6 +101,84 @@ def capture_camera_frame(
         return image.convert("RGB")
 
 
+class PersistentCameraStream:
+    def __init__(
+        self,
+        camera_id: int,
+        rtsp_url: str,
+        camera_roi: tuple[float, float, float, float] | None,
+    ) -> None:
+        self.camera_id = camera_id
+        self.rtsp_url = rtsp_url
+        self.camera_roi = camera_roi
+        self._lock = threading.Lock()
+        self._stop_event = threading.Event()
+        self._thread: threading.Thread | None = None
+        self._capture: cv2.VideoCapture | None = None
+        self._latest_frame: Image.Image | None = None
+
+    def start(self) -> None:
+        if self._thread is not None:
+            return
+        self._thread = threading.Thread(
+            target=self._reader_loop,
+            name=f"camera-stream-{self.camera_id}",
+            daemon=True,
+        )
+        self._thread.start()
+
+    def stop(self) -> None:
+        self._stop_event.set()
+        if self._thread is not None:
+            self._thread.join(timeout=2.0)
+            self._thread = None
+        self._release_capture()
+
+    def get_latest_frame(self, timeout: float) -> Image.Image:
+        deadline = time.monotonic() + timeout
+        while time.monotonic() < deadline:
+            with self._lock:
+                frame = self._latest_frame.copy() if self._latest_frame is not None else None
+            if frame is not None:
+                return frame
+            time.sleep(0.05)
+        raise TimeoutError(f"Camera {self.camera_id}: no frame received within {timeout} seconds.")
+
+    def _open_capture(self) -> cv2.VideoCapture | None:
+        capture = cv2.VideoCapture(self.rtsp_url, cv2.CAP_FFMPEG)
+        if not capture.isOpened():
+            capture.release()
+            return None
+        capture.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+        return capture
+
+    def _release_capture(self) -> None:
+        if self._capture is not None:
+            self._capture.release()
+            self._capture = None
+
+    def _reader_loop(self) -> None:
+        while not self._stop_event.is_set():
+            if self._capture is None:
+                self._capture = self._open_capture()
+                if self._capture is None:
+                    time.sleep(1.0)
+                    continue
+
+            ok, frame_bgr = self._capture.read()
+            if not ok or frame_bgr is None:
+                self._release_capture()
+                time.sleep(0.2)
+                continue
+
+            frame_rgb = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB)
+            image = Image.fromarray(frame_rgb)
+            if self.camera_roi is not None:
+                image = image.crop(crop_box(image.size, self.camera_roi))
+            with self._lock:
+                self._latest_frame = image
+
+
 def pen_image_for_camera_frame(
     camera_frame: Image.Image,
     pen_config: PenEnvConfig,
@@ -146,6 +226,8 @@ def normalize_tracking_state_json(values: dict | None) -> dict[str, dict[str, ob
         normalized[str(tracker_key)] = {
             "center_x": float(payload.get("center_x", normalized_history[-1][0] if normalized_history else 0.0)),
             "center_y": float(payload.get("center_y", normalized_history[-1][1] if normalized_history else 0.0)),
+            "smooth_center_x": float(payload.get("smooth_center_x", payload.get("center_x", normalized_history[-1][0] if normalized_history else 0.0))),
+            "smooth_center_y": float(payload.get("smooth_center_y", payload.get("center_y", normalized_history[-1][1] if normalized_history else 0.0))),
             "observed_at": payload.get("observed_at"),
             "history": normalized_history,
         }
@@ -175,6 +257,18 @@ def normalize_seen_track_ids_json(values) -> set[str]:
     return {str(value) for value in values}
 
 
+def normalize_count_histogram_json(values: dict | None) -> dict[int, int]:
+    if not isinstance(values, dict):
+        return {}
+    normalized: dict[int, int] = {}
+    for key, value in values.items():
+        try:
+            normalized[int(key)] = int(value)
+        except (TypeError, ValueError):
+            continue
+    return normalized
+
+
 def iou_xyxy(box_a: np.ndarray, box_b: np.ndarray) -> float:
     x1 = max(float(box_a[0]), float(box_b[0]))
     y1 = max(float(box_a[1]), float(box_b[1]))
@@ -193,6 +287,39 @@ def iou_xyxy(box_a: np.ndarray, box_b: np.ndarray) -> float:
     return intersection / union
 
 
+def filtered_distance_m(
+    current_x: float,
+    current_y: float,
+    previous_x: float,
+    previous_y: float,
+    meters_per_pixel: float,
+    min_distance_m: float,
+    max_distance_m: float,
+) -> float:
+    distance_px = math.hypot(current_x - previous_x, current_y - previous_y)
+    distance_m = distance_px * meters_per_pixel
+    if distance_m < min_distance_m:
+        return 0.0
+    if distance_m > max_distance_m:
+        return 0.0
+    return distance_m
+
+
+def quarter_hour_snapshot_relative_path(pen_key: str, window_start) -> str:
+    return str(Path("pens") / pen_key / "quarter_hour" / f"{window_start.strftime('%Y%m%d_%H%M')}.jpg")
+
+
+def concurrent_count_for_rows(rows: list[dict[str, object]]) -> int:
+    tracker_ids = {
+        row.get("tracker_id")
+        for row in rows
+        if row.get("tracker_id") is not None
+    }
+    if tracker_ids:
+        return len(tracker_ids)
+    return len(rows)
+
+
 class Command(BaseCommand):
     help = "Capture RTSP frames, process per-pen images, and refresh the dashboard."
 
@@ -201,6 +328,7 @@ class Command(BaseCommand):
         self._model = None
         self._class_map: dict[int, str] | None = None
         self._trackers: dict[str, ByteTrackTracker] = {}
+        self._camera_streams: dict[int, PersistentCameraStream] = {}
 
     def add_arguments(self, parser):
         parser.add_argument("--interval", type=float, default=0.5, help="Polling interval in seconds.")
@@ -208,6 +336,9 @@ class Command(BaseCommand):
         parser.add_argument("--threshold", type=float, default=0.25, help="Detection confidence threshold.")
         parser.add_argument("--device", default=default_device(), help="Inference device, for example cpu or cuda:0.")
         parser.add_argument("--capture-timeout", type=int, default=30, help="RTSP frame capture timeout in seconds.")
+        parser.add_argument("--smoothing-alpha", type=float, default=0.25, help="EMA smoothing factor for tracked centroids.")
+        parser.add_argument("--min-distance-m", type=float, default=0.03, help="Ignore movement shorter than this many meters between two updates.")
+        parser.add_argument("--max-distance-m", type=float, default=1.0, help="Ignore jumps longer than this many meters between two updates.")
         parser.add_argument("--lost-track-buffer", type=int, default=120, help="ByteTrack lost track buffer in frames.")
         parser.add_argument("--minimum-consecutive-frames", type=int, default=1, help="ByteTrack minimum consecutive frames before confirming a track.")
         parser.add_argument("--minimum-iou-threshold", type=float, default=0.02, help="ByteTrack minimum IoU threshold for associating detections with existing tracks.")
@@ -215,39 +346,51 @@ class Command(BaseCommand):
         parser.add_argument("--high-conf-det-threshold", type=float, default=0.18, help="ByteTrack high-confidence detection threshold used in the first association stage.")
 
     def handle(self, *args, **options):
-        interval = max(1.0, float(options["interval"]))
+        interval = max(0.1, float(options["interval"]))
         run_once = bool(options["once"])
         threshold = float(options["threshold"])
         device = str(options["device"])
         capture_timeout = max(1, int(options["capture_timeout"]))
+        smoothing_alpha = min(1.0, max(0.0, float(options["smoothing_alpha"])))
+        min_distance_m = max(0.0, float(options["min_distance_m"]))
+        max_distance_m = max(min_distance_m, float(options["max_distance_m"]))
         lost_track_buffer = max(1, int(options["lost_track_buffer"]))
         minimum_consecutive_frames = max(1, int(options["minimum_consecutive_frames"]))
         minimum_iou_threshold = max(0.0, float(options["minimum_iou_threshold"]))
         track_activation_threshold = max(0.0, float(options["track_activation_threshold"]))
         high_conf_det_threshold = max(0.0, float(options["high_conf_det_threshold"]))
 
-        while True:
-            processed = self.process_once(
-                threshold=threshold,
-                device=device,
-                capture_timeout=capture_timeout,
-                lost_track_buffer=lost_track_buffer,
-                minimum_consecutive_frames=minimum_consecutive_frames,
-                minimum_iou_threshold=minimum_iou_threshold,
-                track_activation_threshold=track_activation_threshold,
-                high_conf_det_threshold=high_conf_det_threshold,
-                interval_seconds=interval,
-            )
-            self.stdout.write(self.style.SUCCESS(f"Processed {processed} pens."))
-            if run_once:
-                break
-            time.sleep(interval)
+        try:
+            while True:
+                processed = self.process_once(
+                    threshold=threshold,
+                    device=device,
+                    capture_timeout=capture_timeout,
+                    smoothing_alpha=smoothing_alpha,
+                    min_distance_m=min_distance_m,
+                    max_distance_m=max_distance_m,
+                    lost_track_buffer=lost_track_buffer,
+                    minimum_consecutive_frames=minimum_consecutive_frames,
+                    minimum_iou_threshold=minimum_iou_threshold,
+                    track_activation_threshold=track_activation_threshold,
+                    high_conf_det_threshold=high_conf_det_threshold,
+                    interval_seconds=interval,
+                )
+                self.stdout.write(self.style.SUCCESS(f"Processed {processed} pens."))
+                if run_once:
+                    break
+                time.sleep(interval)
+        finally:
+            self.stop_camera_streams()
 
     def process_once(
         self,
         threshold: float,
         device: str,
         capture_timeout: int,
+        smoothing_alpha: float,
+        min_distance_m: float,
+        max_distance_m: float,
         lost_track_buffer: int,
         minimum_consecutive_frames: int,
         minimum_iou_threshold: float,
@@ -255,8 +398,10 @@ class Command(BaseCommand):
         high_conf_det_threshold: float,
         interval_seconds: float,
     ) -> int:
+        loop_started_at = time.perf_counter()
         camera_configs = sync_pens_from_env()
         model, class_map = self.ensure_model(device=device)
+        self.ensure_camera_streams(camera_configs)
         processed = 0
         for camera_config in camera_configs:
             if not camera_config.rtsp_url:
@@ -267,34 +412,30 @@ class Command(BaseCommand):
                 )
                 continue
             try:
-                camera_frame = capture_camera_frame(
-                    rtsp_url=camera_config.rtsp_url,
-                    timeout=capture_timeout,
-                    camera_roi=camera_config.camera_roi_xyxy_norm,
+                capture_started_at = time.perf_counter()
+                camera_frame = self.capture_camera_frame_from_stream(camera_config, capture_timeout)
+                capture_duration = time.perf_counter() - capture_started_at
+                self.stdout.write(
+                    f"camera={camera_config.camera_id} capture_s={capture_duration:.3f}"
                 )
-            except FileNotFoundError:
-                raise RuntimeError("ffmpeg is not installed or is not on PATH.")
-            except subprocess.TimeoutExpired:
+            except TimeoutError:
                 self.stdout.write(
                     self.style.WARNING(
-                        f"Camera {camera_config.camera_id}: capture timed out after {capture_timeout} seconds."
-                    )
-                )
-                continue
-            except subprocess.CalledProcessError as exc:
-                self.stdout.write(
-                    self.style.WARNING(
-                        f"Camera {camera_config.camera_id}: ffmpeg failed with exit code {exc.returncode}."
+                        f"Camera {camera_config.camera_id}: stream did not provide a frame within {capture_timeout} seconds."
                     )
                 )
                 continue
 
             for pen_config in camera_config.pens:
+                pen_started_at = time.perf_counter()
                 pen_image, relative_path, captured_at = pen_image_for_camera_frame(
                     camera_frame,
                     pen_config,
                 )
+                inference_started_at = time.perf_counter()
                 detections = model.predict(pen_image)
+                inference_duration = time.perf_counter() - inference_started_at
+                trajectory_started_at = time.perf_counter()
                 tracked_detections = self.track_pen_detections(
                     pen_key=pen_config.key,
                     detections=detections,
@@ -323,6 +464,9 @@ class Command(BaseCommand):
                     rows=rows,
                     pen_image_height_px=pen_image.height,
                     captured_at=captured_at,
+                    smoothing_alpha=smoothing_alpha,
+                    min_distance_m=min_distance_m,
+                    max_distance_m=max_distance_m,
                 )
                 self.update_quarter_hour_activity(
                     pen_state=pen_state,
@@ -330,8 +474,14 @@ class Command(BaseCommand):
                     captured_at=captured_at,
                     interval_seconds=interval_seconds,
                     pen_image_height_px=pen_image.height,
+                    pen_image=pen_image,
+                    min_distance_m=min_distance_m,
+                    max_distance_m=max_distance_m,
                 )
+                trajectory_duration = time.perf_counter() - trajectory_started_at
+                overlay_started_at = time.perf_counter()
                 annotated = draw_predictions(pen_image, rows, class_map)
+                overlay_duration = time.perf_counter() - overlay_started_at
                 output_path = Path(settings.MEDIA_ROOT) / relative_path
                 output_path.parent.mkdir(parents=True, exist_ok=True)
                 annotated.save(output_path, format="JPEG", quality=90)
@@ -348,8 +498,59 @@ class Command(BaseCommand):
                         "updated_at",
                     ]
                 )
+                total_pen_duration = time.perf_counter() - pen_started_at
+                self.stdout.write(
+                    "pen={pen} detections={detections} inference_s={inference:.3f} "
+                    "trajectory_s={trajectory:.3f} overlay_s={overlay:.3f} total_s={total:.3f}".format(
+                        pen=pen_config.key,
+                        detections=len(rows),
+                        inference=inference_duration,
+                        trajectory=trajectory_duration,
+                        overlay=overlay_duration,
+                        total=total_pen_duration,
+                    )
+                )
                 processed += 1
+        loop_duration = time.perf_counter() - loop_started_at
+        self.stdout.write(f"loop processed={processed} total_s={loop_duration:.3f}")
         return processed
+
+    def ensure_camera_streams(self, camera_configs: list[CameraEnvConfig]) -> None:
+        active_camera_ids = {camera.camera_id for camera in camera_configs if camera.rtsp_url}
+        for camera_id in list(self._camera_streams):
+            if camera_id not in active_camera_ids:
+                self._camera_streams[camera_id].stop()
+                del self._camera_streams[camera_id]
+
+        for camera_config in camera_configs:
+            if not camera_config.rtsp_url:
+                continue
+            stream = self._camera_streams.get(camera_config.camera_id)
+            if stream is None or stream.rtsp_url != camera_config.rtsp_url or stream.camera_roi != camera_config.camera_roi_xyxy_norm:
+                if stream is not None:
+                    stream.stop()
+                stream = PersistentCameraStream(
+                    camera_id=camera_config.camera_id,
+                    rtsp_url=camera_config.rtsp_url,
+                    camera_roi=camera_config.camera_roi_xyxy_norm,
+                )
+                stream.start()
+                self._camera_streams[camera_config.camera_id] = stream
+
+    def stop_camera_streams(self) -> None:
+        for stream in self._camera_streams.values():
+            stream.stop()
+        self._camera_streams.clear()
+
+    def capture_camera_frame_from_stream(
+        self,
+        camera_config: CameraEnvConfig,
+        timeout: int,
+    ) -> Image.Image:
+        stream = self._camera_streams.get(camera_config.camera_id)
+        if stream is None:
+            raise TimeoutError(f"Camera {camera_config.camera_id}: stream not initialized.")
+        return stream.get_latest_frame(timeout=float(timeout))
 
     def ensure_model(self, device: str):
         if self._class_map is None:
@@ -436,6 +637,9 @@ class Command(BaseCommand):
         rows: list[dict[str, object]],
         pen_image_height_px: int,
         captured_at,
+        smoothing_alpha: float,
+        min_distance_m: float,
+        max_distance_m: float,
     ) -> None:
         if pen_image_height_px <= 0:
             return
@@ -454,12 +658,29 @@ class Command(BaseCommand):
             center_x, center_y = center_of_bbox(row)
             previous = previous_tracking_state.get(tracker_key)
             previous_history = previous.get("history", []) if isinstance(previous, dict) else []
+            previous_smooth_x = center_x
+            previous_smooth_y = center_y
+            if isinstance(previous, dict):
+                try:
+                    previous_smooth_x = float(previous.get("smooth_center_x", previous["center_x"]))
+                    previous_smooth_y = float(previous.get("smooth_center_y", previous["center_y"]))
+                except (KeyError, TypeError, ValueError):
+                    previous_smooth_x = center_x
+                    previous_smooth_y = center_y
+            smooth_center_x = center_x if not isinstance(previous, dict) else (
+                smoothing_alpha * center_x + (1.0 - smoothing_alpha) * previous_smooth_x
+            )
+            smooth_center_y = center_y if not isinstance(previous, dict) else (
+                smoothing_alpha * center_y + (1.0 - smoothing_alpha) * previous_smooth_y
+            )
             history = [list(point) for point in previous_history]
-            history.append([center_x, center_y])
+            history.append([smooth_center_x, smooth_center_y])
             history = history[-10:]
             current_tracking_state[tracker_key] = {
                 "center_x": center_x,
                 "center_y": center_y,
+                "smooth_center_x": smooth_center_x,
+                "smooth_center_y": smooth_center_y,
                 "observed_at": captured_at.isoformat(),
                 "history": history,
             }
@@ -468,14 +689,15 @@ class Command(BaseCommand):
             if not isinstance(previous, dict):
                 continue
 
-            try:
-                previous_center_x = float(previous["center_x"])
-                previous_center_y = float(previous["center_y"])
-            except (KeyError, TypeError, ValueError):
-                continue
-
-            distance_px = math.hypot(center_x - previous_center_x, center_y - previous_center_y)
-            distance_m = distance_px * meters_per_pixel
+            distance_m = filtered_distance_m(
+                current_x=smooth_center_x,
+                current_y=smooth_center_y,
+                previous_x=previous_smooth_x,
+                previous_y=previous_smooth_y,
+                meters_per_pixel=meters_per_pixel,
+                min_distance_m=min_distance_m,
+                max_distance_m=max_distance_m,
+            )
             daily_distance[today_key] = daily_distance.get(today_key, 0.0) + distance_m
 
         cutoff_date = captured_at.date() - timedelta(days=7)
@@ -503,6 +725,9 @@ class Command(BaseCommand):
         captured_at,
         interval_seconds: float,
         pen_image_height_px: int,
+        pen_image: Image.Image,
+        min_distance_m: float,
+        max_distance_m: float,
     ) -> None:
         if pen_image_height_px <= 0:
             return
@@ -514,7 +739,23 @@ class Command(BaseCommand):
             label = row.get("class_name") or "object"
             rows_by_label.setdefault(str(label), []).append(row)
 
+        pig_rows = rows_by_label.get("pig", [])
+        self.update_pig_quarter_hour_activity(
+            pen_state=pen_state,
+            label_rows=pig_rows,
+            captured_at=captured_at,
+            interval_seconds=interval_seconds,
+            window_start=window_start,
+            window_end=window_end,
+            pen_image=pen_image,
+            meters_per_pixel=meters_per_pixel,
+            min_distance_m=min_distance_m,
+            max_distance_m=max_distance_m,
+        )
+
         for label, label_rows in rows_by_label.items():
+            if label == "pig":
+                continue
             with transaction.atomic():
                 activity, _ = PenActivityQuarterHour.objects.select_for_update().get_or_create(
                     pen=pen_state.pen,
@@ -542,10 +783,17 @@ class Command(BaseCommand):
                         continue
                     start = trajectory_points[-2]
                     end = trajectory_points[-1]
-                    distance_px = math.hypot(float(end[0]) - float(start[0]), float(end[1]) - float(start[1]))
-                    if distance_px <= 0:
+                    distance_m = filtered_distance_m(
+                        current_x=float(end[0]),
+                        current_y=float(end[1]),
+                        previous_x=float(start[0]),
+                        previous_y=float(start[1]),
+                        meters_per_pixel=meters_per_pixel,
+                        min_distance_m=min_distance_m,
+                        max_distance_m=max_distance_m,
+                    )
+                    if distance_m <= 0:
                         continue
-                    distance_m = distance_px * meters_per_pixel
                     track_distance[tracker_key] = track_distance.get(tracker_key, 0.0) + distance_m
 
                 per_track_distances = list(track_distance.values())
@@ -570,3 +818,107 @@ class Command(BaseCommand):
                 activity.track_distance_json = track_distance
                 activity.seen_track_ids_json = sorted(seen_track_ids)
                 activity.save()
+
+    def update_pig_quarter_hour_activity(
+        self,
+        pen_state: PenState,
+        label_rows: list[dict[str, object]],
+        captured_at,
+        interval_seconds: float,
+        window_start,
+        window_end,
+        pen_image: Image.Image,
+        meters_per_pixel: float,
+        min_distance_m: float,
+        max_distance_m: float,
+    ) -> None:
+        with transaction.atomic():
+            activity, _ = PenActivityQuarterHour.objects.select_for_update().get_or_create(
+                pen=pen_state.pen,
+                label="pig",
+                window_start=window_start,
+                defaults={
+                    "window_end": window_end,
+                },
+            )
+
+            track_distance = normalize_track_distance_json(activity.track_distance_json)
+            seen_track_ids = normalize_seen_track_ids_json(activity.seen_track_ids_json)
+            histogram = normalize_count_histogram_json(activity.concurrent_count_histogram_json)
+
+            pig_count = concurrent_count_for_rows(label_rows)
+            detection_count_increment = len(label_rows)
+            present_track_ids: set[str] = set()
+            for row in label_rows:
+                tracker_id = row.get("tracker_id")
+                if tracker_id is not None:
+                    tracker_key = str(tracker_id)
+                    present_track_ids.add(tracker_key)
+                    seen_track_ids.add(tracker_key)
+
+                trajectory_points = row.get("trajectory_points") or []
+                if len(trajectory_points) < 2 or tracker_id is None:
+                    continue
+                start = trajectory_points[-2]
+                end = trajectory_points[-1]
+                distance_m = filtered_distance_m(
+                    current_x=float(end[0]),
+                    current_y=float(end[1]),
+                    previous_x=float(start[0]),
+                    previous_y=float(start[1]),
+                    meters_per_pixel=meters_per_pixel,
+                    min_distance_m=min_distance_m,
+                    max_distance_m=max_distance_m,
+                )
+                if distance_m <= 0:
+                    continue
+                track_distance[tracker_key] = track_distance.get(tracker_key, 0.0) + distance_m
+
+            sample_count = int(activity.sample_count) + 1
+            histogram[pig_count] = histogram.get(pig_count, 0) + 1
+            histogram_total = sum(histogram.values())
+            weighted_sum = sum(count * occurrences for count, occurrences in histogram.items())
+            mode_count = 0
+            mode_frequency = -1
+            for count, occurrences in sorted(histogram.items()):
+                if occurrences > mode_frequency:
+                    mode_count = count
+                    mode_frequency = occurrences
+
+            per_track_distances = list(track_distance.values())
+            total_distance = sum(per_track_distances)
+            mean_distance = total_distance / len(per_track_distances) if per_track_distances else 0.0
+            variance_distance = (
+                sum((value - mean_distance) ** 2 for value in per_track_distances) / len(per_track_distances)
+                if per_track_distances
+                else 0.0
+            )
+
+            activity.window_end = window_end
+            activity.sample_count = sample_count
+            activity.concurrent_count_histogram_json = {str(key): value for key, value in sorted(histogram.items())}
+            activity.concurrent_count_mean = round(weighted_sum / histogram_total, 4) if histogram_total else 0.0
+            activity.concurrent_count_max = max(histogram) if histogram else 0
+            activity.concurrent_count_mode = mode_count
+            if pig_count > 0:
+                activity.present = True
+                activity.presence_seconds += float(interval_seconds)
+                activity.first_seen_at = activity.first_seen_at or captured_at
+                activity.last_seen_at = captured_at
+            activity.detection_count += detection_count_increment
+            activity.track_count = len(seen_track_ids)
+            activity.distance_total_m = round(total_distance, 4)
+            activity.distance_mean_per_track_m = round(mean_distance, 4)
+            activity.distance_variance_per_track_m = round(variance_distance, 6)
+            activity.track_distance_json = track_distance
+            activity.seen_track_ids_json = sorted(seen_track_ids)
+
+            if not activity.snapshot_relative_path:
+                snapshot_relative_path = quarter_hour_snapshot_relative_path(pen_state.pen.key, window_start)
+                output_path = Path(settings.MEDIA_ROOT) / snapshot_relative_path
+                output_path.parent.mkdir(parents=True, exist_ok=True)
+                pen_image.save(output_path, format="JPEG", quality=90)
+                activity.snapshot_relative_path = snapshot_relative_path
+                activity.snapshot_captured_at = captured_at
+
+            activity.save()

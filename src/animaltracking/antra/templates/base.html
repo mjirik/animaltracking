@@ -30,7 +30,7 @@
     <link rel="stylesheet" href="{% static 'uploader/main.css' %}" type="text/css"/>
     <script src="{% static 'uploader/main.js' %}"></script> <!-- This is how to include a static file -->
     <title>Animal Tracking</title>
-    <link rel="shortcut icon" type="image/png" href="{% static 'uploader/favicon.ico' %}"/>
+    <link rel="icon" type="image/svg+xml" href="{% static 'antra/antra_logo.svg' %}"/>
     <!-- link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/css/bootstrap.min.css" integrity="sha384-/Y6pD6FV/Vv2HJnA6t+vslU6fwYXjCFtcEpHbNJ0lyAFsXTsjBbfaDjzALeQsN6M" crossorigin="anonymous"> -->
     <!--    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">-->
     <!-- Latest compiled and minified JavaScript -->
@@ -85,11 +85,14 @@
                     <a class="nav-link" href="{% url 'antra:login' %}">Login</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'antra:mediafile-list' %}">Mediafiles</a>
+                    <a class="nav-link" href="{% url 'antra:mediafile-list' %}">Media Files</a>
                 </li>
 
                 <li class="nav-item">
                     <a class="nav-link" href="{% url 'antra:import_videos' %}">Import Videos</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'antra:export-activity-csv' %}">Export CSV</a>
                 </li>
             </ul>
         </div>

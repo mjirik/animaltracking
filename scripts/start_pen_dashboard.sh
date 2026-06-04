@@ -40,12 +40,17 @@ append_log_header() {
     } >>"$log_file"
 }
 
+is_pid_running() {
+    local pid="$1"
+    kill -0 "$pid" >/dev/null 2>&1
+}
+
 is_running() {
     local pid_file="$1"
     if [[ -f "$pid_file" ]]; then
         local pid
         pid="$(cat "$pid_file")"
-        if kill -0 "$pid" >/dev/null 2>&1; then
+        if is_pid_running "$pid"; then
             return 0
         fi
         rm -f "$pid_file"
@@ -77,6 +82,21 @@ wait_for_pattern_to_clear() {
     return 1
 }
 
+start_detached() {
+    local log_file="$1"
+    local pid_file="$2"
+    shift 2
+
+    setsid "$@" >>"$log_file" 2>&1 </dev/null &
+    local pid=$!
+    echo "$pid" >"$pid_file"
+    sleep 1
+    if ! is_pid_running "$pid"; then
+        echo "Process failed to stay running: $*" >&2
+        return 1
+    fi
+}
+
 start_web() {
     if is_running "$WEB_PID_FILE"; then
         echo "Web server already running with PID $(cat "$WEB_PID_FILE")"
@@ -95,13 +115,14 @@ start_web() {
     fi
 
     append_log_header "$WEB_LOG" "web"
-
     (
         cd "$ROOT_DIR"
         PYTHONUNBUFFERED=1 "$PYTHON_BIN" -u src/animaltracking/manage.py migrate >>"$WEB_LOG" 2>&1
-        exec env PYTHONUNBUFFERED=1 "$PYTHON_BIN" -u src/animaltracking/manage.py runserver "${HOST}:${PORT}"
-    ) >>"$WEB_LOG" 2>&1 &
-    echo $! >"$WEB_PID_FILE"
+    )
+    (
+        cd "$ROOT_DIR"
+        start_detached "$WEB_LOG" "$WEB_PID_FILE" env PYTHONUNBUFFERED=1 "$PYTHON_BIN" -u src/animaltracking/manage.py runserver "${HOST}:${PORT}"
+    )
     echo "Started web server on ${HOST}:${PORT} with PID $(cat "$WEB_PID_FILE")"
 }
 
@@ -123,12 +144,10 @@ start_worker() {
     fi
 
     append_log_header "$WORKER_LOG" "worker"
-
     (
         cd "$ROOT_DIR"
-        exec env PYTHONUNBUFFERED=1 "$PYTHON_BIN" -u src/animaltracking/manage.py run_pen_worker --device "$DEVICE" --threshold "$THRESHOLD" --interval "$INTERVAL"
-    ) >>"$WORKER_LOG" 2>&1 &
-    echo $! >"$WORKER_PID_FILE"
+        start_detached "$WORKER_LOG" "$WORKER_PID_FILE" env PYTHONUNBUFFERED=1 "$PYTHON_BIN" -u src/animaltracking/manage.py run_pen_worker --device "$DEVICE" --threshold "$THRESHOLD" --interval "$INTERVAL"
+    )
     echo "Started worker with PID $(cat "$WORKER_PID_FILE")"
 }
 

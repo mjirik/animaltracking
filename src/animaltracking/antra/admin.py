@@ -1,5 +1,6 @@
 from django.contrib import admin
 
+from .export_utils import build_activity_csv_response
 from .models import Animal, AnimalEnclosure, Camera, MediaFile, Pen, PenActivityQuarterHour, PenState, Track
 
 
@@ -72,8 +73,20 @@ class PenActivityQuarterHourAdmin(admin.ModelAdmin):
         "distance_total_m",
         "present",
         "presence_seconds",
+        "sample_count",
+        "concurrent_count_mode",
+        "concurrent_count_mean",
+        "concurrent_count_max",
         "track_count",
         "detection_count",
     )
     list_filter = ("label", "present", "pen__camera_id")
     search_fields = ("pen__key", "pen__name", "label")
+    actions = ("export_as_csv",)
+
+    @admin.action(description="Export selected quarter-hour activity rows as CSV")
+    def export_as_csv(self, request, queryset):
+        return build_activity_csv_response(
+            queryset=queryset.select_related("pen").order_by("pen__camera_id", "pen__pen_index", "label", "window_start"),
+            filename="pen_activity_quarter_hour.csv",
+        )

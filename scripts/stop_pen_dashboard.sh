@@ -6,8 +6,17 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 LOG_DIR="$ROOT_DIR/logs/pigtracking_dashboard"
 WEB_PID_FILE="$LOG_DIR/web.pid"
 WORKER_PID_FILE="$LOG_DIR/worker.pid"
-WEB_PATTERN="src/animaltracking/manage.py runserver 0.0.0.0:8000"
+WEB_PATTERN="src/animaltracking/manage.py runserver"
 WORKER_PATTERN="src/animaltracking/manage.py run_pen_worker"
+
+stop_pid() {
+    local label="$1"
+    local pid="$2"
+    if kill -0 "$pid" >/dev/null 2>&1; then
+        kill "$pid" 2>/dev/null || true
+        echo "Stopped $label PID $pid"
+    fi
+}
 
 stop_by_pattern() {
     local label="$1"
@@ -20,11 +29,10 @@ stop_by_pattern() {
         return
     fi
 
-    echo "$pids" | while read -r pid; do
+    while read -r pid; do
         [[ -n "$pid" ]] || continue
-        kill "$pid" 2>/dev/null || true
-        echo "Stopped $label PID $pid"
-    done
+        stop_pid "$label" "$pid"
+    done <<<"$pids"
 }
 
 stop_process() {
@@ -32,21 +40,14 @@ stop_process() {
     local pid_file="$2"
     local pattern="$3"
 
-    if [[ ! -f "$pid_file" ]]; then
-        stop_by_pattern "$label" "$pattern"
-        return
+    if [[ -f "$pid_file" ]]; then
+        local pid
+        pid="$(cat "$pid_file")"
+        stop_pid "$label" "$pid"
+        rm -f "$pid_file"
     fi
 
-    local pid
-    pid="$(cat "$pid_file")"
-    if kill -0 "$pid" >/dev/null 2>&1; then
-        kill "$pid"
-        echo "Stopped $label PID $pid"
-    else
-        echo "$label PID file existed, but process $pid was not running."
-        stop_by_pattern "$label" "$pattern"
-    fi
-    rm -f "$pid_file"
+    stop_by_pattern "$label" "$pattern"
 }
 
 stop_process "worker" "$WORKER_PID_FILE" "$WORKER_PATTERN"
