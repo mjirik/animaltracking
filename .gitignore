@@ -60,6 +60,10 @@ coverage.xml
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
+db.sqlite3-shm
+db.sqlite3-wal
+media/
+staticfiles/
 
 # Flask stuff:
 instance/
@@ -127,3 +131,23 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# IDE and local tooling
+.idea/
+
+# Runtime and experiment outputs
+logs/
+runs/
+antra_import/
+devel/dataset_preparation/devel/
+devel/dataset_preparation/snapshots/
+devel/dataset_preparation/video_clips/
+devel/dataset_preparation/*_extracted/
+devel/dataset_preparation/pigtracking_rfdetr_*/
+devel/dataset_preparation/*.zip
+
+# Model weights are published as release assets, not stored in Git.
+*.pth
+*.pt
+*.ckpt
+*.onnx

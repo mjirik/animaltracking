@@ -1,0 +1,15 @@
+{
+  "model_size": "medium",
+  "dataset": "pigtracking_rfdetr_2026-05-04",
+  "checkpoint": "models/pigtracking_rfdetr_best.pth",
+  "class_map": "models/pigtracking_rfdetr_best.classes.json",
+  "device": "cuda",
+  "epochs": 50,
+  "batch_size": 4,
+  "grad_accum_steps": 4,
+  "lr": 0.0001,
+  "resolution": null,
+  "wandb": true,
+  "project": "pigtracking",
+  "run_name": "pigtracking_2026-05-04_medium"
+}

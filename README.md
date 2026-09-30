@@ -5,6 +5,30 @@
 * Docker
 * Conda environment `pigtracking` for local non-Docker run
 
+## Model weights
+
+Trained weights are distributed separately from the Git repository as release
+assets. Download `pigtracking_rfdetr_best.pth` from the matching GitHub release
+and place it in `models/`. Keep the small class-map and metadata JSON files from
+this repository next to it:
+
+```text
+models/
+├── pigtracking_rfdetr_best.pth
+├── pigtracking_rfdetr_best.classes.json
+└── pigtracking_rfdetr_best.metadata.json
+```
+
+For release `v0.0.1`, verify the downloaded checkpoint with:
+
+```bash
+echo "6e836d9db8da992b0ca7f1383ec348848eb51bf51f9523414e6476d910992e0e  models/pigtracking_rfdetr_best.pth" | sha256sum --check
+```
+
+The generic RF-DETR pretraining files (`rf-detr-nano.pth` and
+`rf-detr-medium.pth`) are not application release artifacts; RF-DETR can fetch
+its own pretrained weights when they are needed for training.
+
 ## Run application for debug
 
 ```bash
