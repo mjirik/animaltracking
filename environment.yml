@@ -14,6 +14,7 @@ dependencies:
   - scikit-learn
   - seaborn
   - django=4.2
+  - huggingface_hub
     #    - io3d
     #    - sed3
     #    - pytz
@@ -25,4 +26,3 @@ dependencies:
     #    - torchaudio
     #    - cudatoolkit=11.0
     #    - timm
-

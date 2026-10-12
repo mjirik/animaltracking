@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -11,6 +12,12 @@ from PIL import Image, ImageDraw
 import rfdetr
 
 from pigtracking_env_utils import default_device
+
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(PROJECT_ROOT / "src" / "animaltracking"))
+
+from antra.rfdetr_runtime import resolve_model_path  # noqa: E402
 
 
 MODEL_CLASSES = {
@@ -28,8 +35,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--model",
         type=Path,
-        default=Path("models") / "pigtracking_rfdetr_best.pth",
-        help="Path to a trained RF-DETR checkpoint.",
+        help="Path to a trained RF-DETR checkpoint. Downloads ANTRA v0.0.1 if omitted.",
     )
     parser.add_argument(
         "--model-size",
@@ -187,14 +193,12 @@ def draw_predictions(
 
 def main() -> None:
     args = parse_args()
-    model_path = args.model.resolve()
+    model_path = resolve_model_path(args.model)
     input_dir = args.input.resolve()
     output_dir = resolve_output_dir(args.output)
     class_map = load_class_map(args.class_map.resolve())
     num_classes = max(class_map) if class_map else None
 
-    if not model_path.exists():
-        raise FileNotFoundError(f"Model checkpoint not found: {model_path}")
     if not input_dir.exists():
         raise FileNotFoundError(f"Input directory not found: {input_dir}")
 

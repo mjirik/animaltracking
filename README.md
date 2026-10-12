@@ -7,21 +7,26 @@
 
 ## Model weights
 
-Trained weights are distributed separately from the Git repository as release
-assets. Download `pigtracking_rfdetr_best.pth` from the matching GitHub release
-and place it in `models/`. Keep the small class-map and metadata JSON files from
-this repository next to it:
+Trained weights are distributed through the
+[`mjirik/antra`](https://huggingface.co/mjirik/antra) Hugging Face repository.
+On the first inference run, ANTRA downloads the pinned `v0.0.1` checkpoint into
+the standard Hugging Face cache. Later runs reuse the cached file. A local file
+at `models/pigtracking_rfdetr_best.pth` takes precedence, and callers can pass a
+different checkpoint with `--model`.
+
+The small class-map and metadata JSON files remain versioned in this repository:
 
 ```text
 models/
-├── pigtracking_rfdetr_best.pth
 ├── pigtracking_rfdetr_best.classes.json
 └── pigtracking_rfdetr_best.metadata.json
 ```
 
-For release `v0.0.1`, verify the downloaded checkpoint with:
+To download the checkpoint into `models/` manually and verify it:
 
 ```bash
+hf download mjirik/antra pigtracking_rfdetr_best.pth \
+  --revision v0.0.1 --local-dir models
 echo "6e836d9db8da992b0ca7f1383ec348848eb51bf51f9523414e6476d910992e0e  models/pigtracking_rfdetr_best.pth" | sha256sum --check
 ```
 

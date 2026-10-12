@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any
 
 from PIL import Image, ImageDraw
+from huggingface_hub import hf_hub_download
 
 import rfdetr
 
@@ -20,13 +21,44 @@ MODEL_CLASSES = {
     "large": "RFDETRLarge",
 }
 
+MODEL_REPO_ID = "mjirik/antra"
+MODEL_REVISION = "v0.0.1"
+MODEL_FILENAME = "pigtracking_rfdetr_best.pth"
+
 
 def default_device() -> str:
     return os.environ.get("RFDETR_DEVICE", "cuda")
 
 
 def model_path() -> Path:
-    return project_root() / "models" / "pigtracking_rfdetr_best.pth"
+    return project_root() / "models" / MODEL_FILENAME
+
+
+def resolve_model_path(checkpoint: Path | None = None) -> Path:
+    """Return an explicit/local checkpoint or download the pinned release to the HF cache."""
+    if checkpoint is not None:
+        resolved = checkpoint.expanduser().resolve()
+        if not resolved.exists():
+            raise FileNotFoundError(f"Model checkpoint not found: {resolved}")
+        return resolved
+
+    local_checkpoint = model_path()
+    if local_checkpoint.exists():
+        return local_checkpoint
+
+    try:
+        return Path(
+            hf_hub_download(
+                repo_id=MODEL_REPO_ID,
+                filename=MODEL_FILENAME,
+                revision=MODEL_REVISION,
+            )
+        )
+    except Exception as exc:
+        raise RuntimeError(
+            f"Unable to download {MODEL_REPO_ID}/{MODEL_FILENAME} at {MODEL_REVISION}. "
+            "Check the network connection or pass a local checkpoint path."
+        ) from exc
 
 
 def class_map_path() -> Path:
@@ -69,9 +101,7 @@ def build_model(
     device: str | None = None,
     num_classes: int | None = None,
 ) -> Any:
-    checkpoint_path = checkpoint or model_path()
-    if not checkpoint_path.exists():
-        raise FileNotFoundError(f"Model checkpoint not found: {checkpoint_path}")
+    checkpoint_path = resolve_model_path(checkpoint)
 
     resolved_model_size = model_size or default_model_size()
     class_name = MODEL_CLASSES[resolved_model_size]

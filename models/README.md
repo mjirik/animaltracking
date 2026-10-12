@@ -4,9 +4,10 @@ This directory contains the versioned model metadata and class map. The trained
 checkpoint is intentionally excluded from Git because binary model weights make
 repository history large and cannot be reviewed meaningfully.
 
-Download `pigtracking_rfdetr_best.pth` from the GitHub release whose tag matches
-the checked-out source version and place it in this directory. Each release
-should publish these three assets together:
+Inference downloads `pigtracking_rfdetr_best.pth` from the pinned
+[`mjirik/antra`](https://huggingface.co/mjirik/antra) Hugging Face release when
+the local file is absent. Place a checkpoint in this directory only to override
+the cached default. Each model release publishes these three assets together:
 
 - `pigtracking_rfdetr_best.pth`
 - `pigtracking_rfdetr_best.classes.json`

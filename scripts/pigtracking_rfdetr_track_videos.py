@@ -25,6 +25,7 @@ from antra.rfdetr_runtime import (  # noqa: E402
     detection_rows,
     draw_predictions,
     load_class_map,
+    resolve_model_path,
 )
 
 
@@ -36,8 +37,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--model",
         type=Path,
-        default=Path("models") / "pigtracking_rfdetr_best.pth",
-        help="Path to a trained RF-DETR checkpoint.",
+        help="Path to a trained RF-DETR checkpoint. Downloads ANTRA v0.0.1 if omitted.",
     )
     parser.add_argument(
         "--model-size",
@@ -314,14 +314,12 @@ def process_video(
 
 def main() -> None:
     args = parse_args()
-    model_path = args.model.resolve()
+    model_path = resolve_model_path(args.model)
     input_path = args.input.resolve()
     output_dir = resolve_output_dir(args.output)
     class_map = load_class_map(args.class_map.resolve())
     num_classes = max(class_map) if class_map else None
 
-    if not model_path.exists():
-        raise FileNotFoundError(f"Model checkpoint not found: {model_path}")
     if not input_path.exists():
         raise FileNotFoundError(f"Input path not found: {input_path}")
 
