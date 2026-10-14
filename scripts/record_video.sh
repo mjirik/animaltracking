@@ -4,36 +4,58 @@
 # sudo apt-get update
 # sudo apt-get install sshfs livemedia-utils
 
-DATADIR="$HOME/data/biomedical/"
+DATADIR="${DATADIR:-$HOME/data/biomedical}"
 
 # mkdir -p ~/mnt/biomedical
 # sshfs $USER@storage-plzen4.kky.zcu.cz:/data-ntis/projects/korpusy_cv/biomedical ~/mnt/biomedical
 
-# create .vim file with keys: $CAMERA_USER $CAMERA_PASS $CAMERA_URL
-export $(grep -v '^#' .env | xargs -d '\n')
+# Load .env without splitting values on whitespace.  The previous xargs-based
+# version turned e.g. "[0, 0, 1, 1]" into several arguments to `export`.
+ENV_FILE="${ENV_FILE:-.env}"
+if [ -f "$ENV_FILE" ]; then
+    while IFS= read -r line || [ -n "$line" ]; do
+        case "$line" in
+            ''|'#'*) continue ;;
+        esac
+        name=${line%%=*}
+        value=${line#*=}
+        if [[ "$name" =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]]; then
+            export "$name=$value"
+        fi
+    done < "$ENV_FILE"
+fi
 
 
-if [ "$#" -ne 1 ]; then
-    export CAMERA_URL=$CAMERA1_URL
-    export CAMERA_NUMBER=1
+if [ "$#" -eq 0 ]; then
+    CAMERA_NUMBER=1
     echo "No camera number given. Using Camera 1"
+elif [ "$#" -eq 1 ] && [[ "$1" =~ ^[12]$ ]]; then
+    CAMERA_NUMBER=$1
+    echo "Using Camera $CAMERA_NUMBER"
 else
-    if [ "$1" -eq 2 ]; then
-        export CAMERA_URL=$CAMERA2_URL
-        export CAMERA_NUMBER=2
-        echo "Using Camera 2"
-    else
-        export CAMERA_URL=$CAMERA1_URL
-        export CAMERA_NUMBER=1
-        echo "Using Camera 1"
-    fi
+    echo "Usage: $0 [1|2]" >&2
+    exit 2
+fi
+
+# Newer .env files store the complete RTSP URL in RTSP_CAM1/RTSP_CAM2.
+# Keep compatibility with the former CAMERA1_URL/CAMERA2_URL variables.
+if [ "$CAMERA_NUMBER" -eq 1 ]; then
+    CAMERA_URL=${RTSP_CAM1:-${CAMERA1_URL:-}}
+else
+    CAMERA_URL=${RTSP_CAM2:-${CAMERA2_URL:-}}
+fi
+
+if [ -z "$CAMERA_URL" ]; then
+    echo "Missing RTSP_CAM${CAMERA_NUMBER} (or legacy CAMERA${CAMERA_NUMBER}_URL) in $ENV_FILE" >&2
+    exit 1
 fi
 
 DT=$(date +%Y%m%d_%H%M%S)
-mkdir -p $DATADIR/orig/pigtracking/$DT
-cd $DATADIR/orig/pigtracking/$DT
+OUTPUT_DIR="$DATADIR/orig/pigtracking/$DT"
+mkdir -p "$OUTPUT_DIR" || exit 1
+cd "$OUTPUT_DIR" || exit 1
 echo "output dir:"
-echo `pwd`
+pwd
 
 ## mkdir -p ~/mnt/biomedical/orig/pigtracking/$DT
 ## cd ~/mnt/biomedical/orig/pigtracking/$DT
@@ -51,4 +73,8 @@ echo `pwd`
 #-t            # Request camera end stream over TCP, not UDP
 #-u admin 123456  # Username and password expected by camer
 #openRTSP -D 1 -c -B 10000000 -b 10000000 -4 -Q -F cam$CAMERA_NUMBER_$DT -d 28800 -P 600 -t -u CAM_USER CAM_PASSWORD rtsp://IPADRESS:PORT
-openRTSP -D 1 -c -B 10000000 -b 10000000 -4 -Q -F ${DT}_cam${CAMERA_NUMBER} -d 28800 -P 60 -t -u $CAMERA_USER $CAMERA_PASS $CAMERA_URL
+OPENRTSP_ARGS=(-D 1 -c -B 10000000 -b 10000000 -4 -Q -F "${DT}_cam${CAMERA_NUMBER}" -d 28800 -P 300 -t)
+if [ -n "${CAMERA_USER:-}" ] || [ -n "${CAMERA_PASS:-}" ]; then
+    OPENRTSP_ARGS+=(-u "${CAMERA_USER:-}" "${CAMERA_PASS:-}")
+fi
+openRTSP "${OPENRTSP_ARGS[@]}" "$CAMERA_URL"
