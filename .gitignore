@@ -107,6 +107,7 @@ celerybeat.pid
 
 # Environments
 .env
+.env.pigtracking-sync
 .venv
 env/
 venv/

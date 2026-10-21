@@ -20,6 +20,12 @@ if [ -f "$ENV_FILE" ]; then
         name=${line%%=*}
         value=${line#*=}
         if [[ "$name" =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]]; then
+            # dotenv commonly wraps values in quotes; they are syntax, not
+            # part of the RTSP URL itself.
+            if [[ "$value" == \"*\" && "$value" == *\" ]] ||
+               [[ "$value" == \'*\' && "$value" == *\' ]]; then
+                value=${value:1:${#value}-2}
+            fi
             export "$name=$value"
         fi
     done < "$ENV_FILE"
@@ -51,7 +57,7 @@ if [ -z "$CAMERA_URL" ]; then
 fi
 
 DT=$(date +%Y%m%d_%H%M%S)
-OUTPUT_DIR="$DATADIR/orig/pigtracking/$DT"
+OUTPUT_DIR="$DATADIR/orig/pigtracking/cam${CAMERA_NUMBER}_$DT"
 mkdir -p "$OUTPUT_DIR" || exit 1
 cd "$OUTPUT_DIR" || exit 1
 echo "output dir:"
